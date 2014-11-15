@@ -11,3 +11,6 @@
 	path = openfire-tuleap-plugins
 	url = https://github.com/cbayle/openfire-tuleap-plugins.git
 
+[submodule "forgeupgrade"]
+	path = forgeupgrade
+	url = https://github.com/cbayle/ForgeUpgrade.git
