@@ -1,0 +1,13 @@
+[submodule "jpgraph-tuleap"]
+	path = jpgraph-tuleap
+	url = https://github.com/cbayle/jpgraph-tuleap.git
+[submodule "mailman-tuleap"]
+	path = mailman-tuleap
+	url = https://github.com/cbayle/mailman-tuleap.git
+[submodule "viewvc-tuleap"]
+	path = viewvc-tuleap
+	url = https://github.com/cbayle/viewvc-tuleap.git
+[submodule "openfire-tuleap-plugins"]
+	path = openfire-tuleap-plugins
+	url = https://github.com/cbayle/openfire-tuleap-plugins.git
+
