@@ -1,6 +1,8 @@
 #! /usr/bin/make -f
 BUILDDIR=$(CURDIR)/../srpms-libs
 RESULTDIR=$(CURDIR)/../rpms-libs
+TLBUILDDIR=$(CURDIR)/../srpms
+TLRESULTDIR=$(CURDIR)/../rpms
 
 GITREPOS=\
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/cvs-tuleap.git \
@@ -16,6 +18,7 @@ ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-zendframework.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/forgeupgrade.git
 
+TULEAP=ssh://gitolite@tuleap.net/tuleap/tuleap/stable.git
 
 DEPS=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/documentation.git
 EN=https://github.com/Enalean/tuleap-documentation-en.git
@@ -26,21 +29,41 @@ BUILD_DOC_CONTAINER=https://github.com/Enalean/docker-build-documentation.git
 BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
 
-default: copydoc buildmodules buildtuleap
-	echo 'Done'
+default: buildmodules copydoc buildtuleap
+	@echo 'Done $@'
 
 buildmodules: clonemodules extra buildsrpms buildrpms
-	#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=forgeupgrade
-	#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=viewvc-tuleap
-	#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=jpgraph-tuleap
-	#createrepo $(RESULTDIR)/RPMS
-	echo 'Done'
+	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=forgeupgrade
+	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=viewvc-tuleap
+	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=jpgraph-tuleap
+	@#createrepo $(RESULTDIR)/RPMS
+	@echo 'Done $@'
 
-buildtuleap: clonetuleap
-	echo 'Not yet provided'
+buildtuleap: clonetuleap tlbuildsrpms tlbuildrpms
+	@echo 'Done $@'
+
+tlbuildsrpms: cbayle/docker-tuleap-buildsrpms
+	@echo "=== $@ ==="
+	@[ -d $(TLBUILDDIR)/rhel6 ] || docker run --rm=true -t -i \
+		-e UID=$(shell id -u) \
+		-e GID=$(shell id -g) \
+		-v $(CURDIR)/tuleap/stable:/tuleap \
+		-v $(TLBUILDDIR):/srpms \
+		cbayle/docker-tuleap-buildsrpms:1.0
+	
+tlbuildrpms: cbayle/docker-tuleap-buildrpms
+	@echo "=== $@ ==="
+	@[ -d $(TLRESULTDIR)/RPMS/noarch ] || docker run --rm=true -t -i \
+		-e UID=$(shell id -u) \
+		-e GID=$(shell id -g) \
+		-v $(CURDIR)/tuleap/stable:/tuleap \
+		-v $(TLBUILDDIR):/srpms \
+		-v $(TLRESULTDIR):/tmp/build \
+		cbayle/docker-tuleap-buildrpms /run.sh --folder=rhel6 --php=php
 
 buildsrpms: cbayle/docker-tuleap-buildsrpms
-	docker run --rm=true -t -i \
+	@echo "=== $@ ==="
+	@[ -d $(BUILDDIR)/rhel6 ] || docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
 		-e GID=$(shell id -g) \
                 -v $(CURDIR):/tuleap \
@@ -48,8 +71,8 @@ buildsrpms: cbayle/docker-tuleap-buildsrpms
                 cbayle/docker-tuleap-buildsrpms:1.0
 
 buildrpms: cbayle/docker-tuleap-buildrpms
-	echo 'Nothing yet'
-	docker run --rm=true -t -i \
+	@echo "=== $@ ==="
+	@[ -d $(RESULTDIR)/RPMS/noarch ] || docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
 		-e GID=$(shell id -g) \
 		-v $(BUILDDIR)/:/srpms/ \
@@ -57,9 +80,15 @@ buildrpms: cbayle/docker-tuleap-buildrpms
 		cbayle/docker-tuleap-buildrpms /run.sh --folder=rhel6 --php=php
  
 clonetuleap:
-	echo 'Not yet'
+	@echo "=== $@ ==="
+	@[ -d tuleap/stable ] || git clone $(TULEAP) tuleap/stable
+	@echo "=== Current branch ==="
+	@cd tuleap/stable ; git branch -v
+	@echo "=== Last branch availeble ==="
+	@cd tuleap/stable ; git branch -va | tail -1
 
 clonemodules: 
+	@echo "=== $@ ==="
 	@cd modules ; for gitrepo in $(GITREPOS) ; \
 	do \
 		var=$$(basename "$$gitrepo" '.git'); \
@@ -69,6 +98,7 @@ clonemodules:
 			git clone $$gitrepo ; \
 		fi \
 	done
+	@echo 'Done $@'
 
 VERSION=1.0
 
@@ -101,11 +131,11 @@ cbayle/docker-build-documentation:
 
 # Check container is there
 cbayle/docker-tuleap-buildsrpms:
-	docker images $@ | grep -q $@
+	@docker images $@ | grep -q $@
 
 # Check container is there
 cbayle/docker-tuleap-buildrpms:
-	docker images $@ | grep -q $@
+	@docker images $@ | grep -q $@
 
 docker-build-documentation-container: doc/docker-build-documentation
 	cd doc/docker-build-documentation ; docker build -t cbayle/docker-build-documentation .
@@ -123,15 +153,22 @@ doc/fr:
 	git clone $(FR) doc/fr
 
 copydoc: $(RESULTDIR)/RPMS/noarch $(RESULTDIR)/SOURCES $(RESULTDIR)/SPECS builddoc 
-	cp doc/rpm/RPMS/noarch/*.rpm $(RESULTDIR)/RPMS/noarch
-	cp doc/rpm/SOURCES/*.tar.gz $(RESULTDIR)/SOURCES
-	cp doc/rpm/SPECS/*.spec $(RESULTDIR)/SPECS
+	@cp doc/rpm/RPMS/noarch/*.rpm $(RESULTDIR)/RPMS/noarch
+	@cp doc/rpm/SOURCES/*.tar.gz $(RESULTDIR)/SOURCES
+	@cp doc/rpm/SPECS/*.spec $(RESULTDIR)/SPECS
 
 $(RESULTDIR)/%:
 	[ -d $@ ] || mkdir -p $@
 
 extra: restlertgz
-	echo 'Done Extra'
+	@echo 'Done $@'
 
 restlertgz:
-	cd modules/php53-restler ; git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
+	@echo "=== $@ ==="
+	@cd modules/php53-restler ; \
+	[ -f ../php-restler/php-restler-3.0.rc4.tgz ] || \
+		git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
+
+
+
+
