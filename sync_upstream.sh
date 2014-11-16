@@ -135,7 +135,7 @@ done
 }
 
 add(){
-for submodule in jpgraph-tuleap mailman-tuleap viewvc-tuleap openfire-tuleap-plugins forgeupgrade
+for submodule in forgeupgrade openfire-tuleap-plugins #jpgraph-tuleap mailman-tuleap viewvc-tuleap
 do
 	add_$submodule
 done
