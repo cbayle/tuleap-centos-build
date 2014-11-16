@@ -1,5 +1,6 @@
 #! /usr/bin/make -f
 BUILDDIR=$(CURDIR)/../srpms-libs
+RESULTDIR=$(CURDIR)/../rpms-libs
 
 GITREPOS=\
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/cvs-tuleap.git \
@@ -23,24 +24,38 @@ FR=https://github.com/Enalean/tuleap-documentation-fr.git
 FRGUPG=git@github.com:cbayle/ForgeUpgrade.git
 
 
-GITREPOS2=\
-https://github.com/Enalean/docker-build-documentation.git \
-https://github.com/Enalean/tuleap-admin-documentation.git \
+BUILD_DOC_CONTAINER=https://github.com/Enalean/docker-build-documentation.git
+BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
 
-
-default: build #builddoc copydoc
+default: copydoc buildmodules
 	echo 'Done'
 
-build:
-	make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=forgeupgrade
-	make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=viewvc-tuleap
-	make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=jpgraph-tuleap
-	#createrepo $(BUILDDIR)/RPMS
+buildmodules: modules buildsrpms buildrpms
+	#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=forgeupgrade
+	#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=viewvc-tuleap
+	#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=jpgraph-tuleap
+	echo createrepo $(RESULTDIR)/RPMS
 
+buildsrpms: cbayle/docker-tuleap-buildsrpms
+	docker run --rm=true -t -i \
+		-e UID=$(shell id -u) \
+		-e GID=$(shell id -g) \
+                -v $(CURDIR):/tuleap \
+                -v $(BUILDDIR):/srpms \
+                cbayle/docker-tuleap-buildsrpms:1.0
 
-modules: forgeupgrade
-	@for gitrepo in $(GITREPOS) $(GITREPOS2) ; \
+buildrpms: cbayle/docker-tuleap-buildrpms
+	echo 'Nothing yet'
+	docker run --rm=true -t -i \
+		-e UID=$(shell id -u) \
+		-e GID=$(shell id -g) \
+		-v $(BUILDDIR)/:/srpms/ \
+		-v $(RESULTDIR)/:/tmp/build \
+		cbayle/docker-tuleap-buildrpms /run.sh --folder=rhel6 --php=php
+
+modules: 
+	@for gitrepo in $(GITREPOS) ; \
 	do \
 		var=$$(basename "$$gitrepo" '.git'); \
 		echo "=== $$var ===" ;\
@@ -50,32 +65,65 @@ modules: forgeupgrade
 		fi \
 	done
 
-forgeupgrade:
-	git clone $(FRGUPG) forgeupgrade
-
 VERSION=1.0
 
-dockerbuild:
-	cd docker-build-documentation ; docker build -t cbayle/docker-build-documentation .
+# We need :
+#  the docker-build-documentation container 
+#  get documentation repository as deps
+#  get english documentation 
+#  get french documentation 
+# we only build if doc/rpm/RPMS/noarch is not yet there
+builddoc: cbayle/docker-build-documentation doc/deps doc/en doc/fr
+	@if [ ! -d doc/rpm/RPMS/noarch ] ; \
+	then \
+		docker run --rm -e VERSION=$(VERSION) \
+			-e UID=$(shell id -u) \
+			-e GID=$(shell id -g) \
+			-v $(CURDIR)/doc:/sources \
+			cbayle/docker-build-documentation ; \
+	else \
+		echo "Doc already build, remove doc/rpm if you want to rebuild"; \
+	fi
 
+# We build the container if not found in locally available images
+cbayle/docker-build-documentation:
+	@if docker images $@ | grep -q $@ ; \
+	then \
+		docker images $@ ; \
+	else \
+		make docker-build-documentation-container ; \
+	fi ;\
 
-builddoc:
-	[ -d doc/deps ] || git clone $(DEPS) doc/deps
-	[ -d doc/en ] || git clone $(EN) doc/en
-	[ -d doc/fr ] || git clone $(FR) doc/fr
-	docker run --rm -e VERSION=$(VERSION) \
-		-e UID=$(shell id -u) \
-		-e GID=$(shell id -g) \
-		-v $(CURDIR)/doc:/sources \
-		cbayle/docker-build-documentation
+# Check container is there
+cbayle/docker-tuleap-buildsrpms:
+	docker images $@ | grep -q $@
 
-copydoc:
-	[ -d ../rpms-libs/RPMS/noarch ] || mkdir -p ../rpms-libs/RPMS/noarch
-	[ -d ../rpms-libs/SOURCES ] || mkdir -p ../rpms-libs/SOURCES
-	[ -d ../rpms-libs/SPECS ] || mkdir -p ../rpms-libs/SPECS
-	cp doc/rpm/RPMS/noarch/*.rpm ../rpms-libs/RPMS/noarch
-	cp doc/rpm/SOURCES/*.tar.gz ../rpms-libs/SOURCES
-	cp doc/rpm/SPECS/*.spec ../rpms-libs/SPECS
+# Check container is there
+cbayle/docker-tuleap-buildrpms:
+	docker images $@ | grep -q $@
+
+docker-build-documentation-container: doc/docker-build-documentation
+	cd doc/docker-build-documentation ; docker build -t cbayle/docker-build-documentation .
+
+doc/docker-build-documentation:
+	git clone $(BUILD_DOC_CONTAINER) $@
+
+doc/deps: 
+	git clone $(DEPS) doc/deps
+
+doc/en: 
+	git clone $(EN) doc/en
+
+doc/fr: 
+	git clone $(FR) doc/fr
+
+copydoc: $(RESULTDIR)/RPMS/noarch $(RESULTDIR)/SOURCES $(RESULTDIR)/SPECS builddoc 
+	cp doc/rpm/RPMS/noarch/*.rpm $(RESULTDIR)/RPMS/noarch
+	cp doc/rpm/SOURCES/*.tar.gz $(RESULTDIR)/SOURCES
+	cp doc/rpm/SPECS/*.spec $(RESULTDIR)/SPECS
+
+$(RESULTDIR)/%:
+	[ -d $@ ] || mkdir -p $@
 
 restlertgz:
 	cd php53-restler ; git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
