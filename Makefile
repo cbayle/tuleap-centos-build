@@ -13,7 +13,8 @@ ssh://gitolite@tuleap.net/tuleap/deps/src/php53-restler.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/restler-api-explorer.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/htmlpurifier.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-zendframework.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git
+ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git \
+ssh://gitolite@tuleap.net/tuleap/deps/tuleap/forgeupgrade.git
 
 
 DEPS=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/documentation.git
@@ -21,21 +22,22 @@ EN=https://github.com/Enalean/tuleap-documentation-en.git
 FR=https://github.com/Enalean/tuleap-documentation-fr.git
 
 
-FRGUPG=git@github.com:cbayle/ForgeUpgrade.git
-
-
 BUILD_DOC_CONTAINER=https://github.com/Enalean/docker-build-documentation.git
 BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
 
-default: copydoc buildmodules
+default: copydoc buildmodules buildtuleap
 	echo 'Done'
 
-buildmodules: modules buildsrpms buildrpms
+buildmodules: clonemodules extra buildsrpms buildrpms
 	#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=forgeupgrade
 	#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=viewvc-tuleap
 	#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=jpgraph-tuleap
-	echo createrepo $(RESULTDIR)/RPMS
+	#createrepo $(RESULTDIR)/RPMS
+	echo 'Done'
+
+buildtuleap: clonetuleap
+	echo 'Not yet provided'
 
 buildsrpms: cbayle/docker-tuleap-buildsrpms
 	docker run --rm=true -t -i \
@@ -53,9 +55,12 @@ buildrpms: cbayle/docker-tuleap-buildrpms
 		-v $(BUILDDIR)/:/srpms/ \
 		-v $(RESULTDIR)/:/tmp/build \
 		cbayle/docker-tuleap-buildrpms /run.sh --folder=rhel6 --php=php
+ 
+clonetuleap:
+	echo 'Not yet'
 
-modules: 
-	@for gitrepo in $(GITREPOS) ; \
+clonemodules: 
+	@cd modules ; for gitrepo in $(GITREPOS) ; \
 	do \
 		var=$$(basename "$$gitrepo" '.git'); \
 		echo "=== $$var ===" ;\
@@ -125,5 +130,8 @@ copydoc: $(RESULTDIR)/RPMS/noarch $(RESULTDIR)/SOURCES $(RESULTDIR)/SPECS buildd
 $(RESULTDIR)/%:
 	[ -d $@ ] || mkdir -p $@
 
+extra: restlertgz
+	echo 'Done Extra'
+
 restlertgz:
-	cd php53-restler ; git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
+	cd modules/php53-restler ; git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
