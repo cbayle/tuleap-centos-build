@@ -11,6 +11,9 @@ srpms-docker-rhel6:
 	make -C ../../ -f Makefile.pkgname PKG_NAME=restler-api-explorer buildsrc
 	chown -R $$UID.$$GID /root/rpmbuild
 	ls -al /root/rpmbuild/*
+	echo "Done $@"
 	
 srpms-docker-rhel5:
-	echo "Nothing to do"
+	touch /root/rpmbuild/SRPMS/not_doing_rhel5
+	ls -al /root/rpmbuild/*
+	echo "Done $@"
