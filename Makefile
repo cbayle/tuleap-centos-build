@@ -10,12 +10,16 @@ ifeq ($(strip $(VERSION)),)
         VERSION=1.0
 endif
 
+# Fix for jpgraph package
+JPGRAPH=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/jpgraph-tuleap.git
+JPGRAPH=https://github.com/cbayle/jpgraph-tuleap.git
+
 GITREPOS=\
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/cvs-tuleap.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/mailman-tuleap.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/php-mediawiki-tuleap.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/viewvc-tuleap.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/jpgraph-tuleap.git \
+$(JPGRAPH) \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-restler.git \
 ssh://gitolite@tuleap.net/tuleap/deps/src/php53-restler.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/restler-api-explorer.git \
