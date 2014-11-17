@@ -5,7 +5,7 @@ endif
 PKG_NAME=pkgname
 
 BASE_DIR=$(shell pwd)/modules/$(PKG_NAME)
-version=$(shell LANG=C cat $(BASE_DIR)/VERSION)
+version=$(shell LANG=C cat $(BASE_DIR)/VERSION 2>/dev/null)
 
 
 # rpmbuild --showrc | grep _topdir
@@ -36,13 +36,13 @@ rpmprep:
 	done
 
 copysrc: tarball
-	if [ -f "$(shell ls $(BASE_DIR)/*.tar.gz | head -1)" ] ; then \
+	if [ -f "$(shell ls $(BASE_DIR)/*.tar.gz 2>/dev/null| head -1)" ] ; then \
 		cp $(BASE_DIR)/*.tar.gz $(RPM_TMP)/SOURCES ; \
 	fi
-	if [ -f "$(shell ls $(BASE_DIR)/*.tgz | head -1)" ] ; then \
+	if [ -f "$(shell ls $(BASE_DIR)/*.tgz 2>/dev/null| head -1)" ] ; then \
 		cp $(BASE_DIR)/*.tgz $(RPM_TMP)/SOURCES ; \
 	fi
-	if [ -f "$(shell ls $(BASE_DIR)/*.patch | head -1)" ] ; then \
+	if [ -f "$(shell ls $(BASE_DIR)/*.patch 2>/dev/null| head -1)" ] ; then \
 		cp $(BASE_DIR)/*.patch $(RPM_TMP)/SOURCES ; \
 	fi
 
