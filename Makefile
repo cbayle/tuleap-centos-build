@@ -32,32 +32,38 @@ FR=https://github.com/Enalean/tuleap-documentation-fr.git
 
 
 BUILD_DOC_CONTAINER=https://github.com/Enalean/docker-build-documentation.git
+BUILD_RPM_CONTAINER=https://github.com/Enalean/docker-tuleap-buildrpm.git
+BUILD_SRPM_CONTAINER=https://github.com/Enalean/docker-tuleap-buildsrpms.git
 BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
 
 default: buildmodules buildtuleap copydoc
-	@echo 'Done $@ $(VERSION)'
+	@echo '--> Done $@ $(VERSION)'
 
 buildmodules: clonemodules extra buildsrpms buildrpms
 	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=forgeupgrade
 	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=viewvc-tuleap
 	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=jpgraph-tuleap
 	@#createrepo $(RESULTDIR)/RPMS
-	@echo 'Done $@'
+	@echo '--> Done $@'
 
 buildtuleap: clonetuleap tlbuildsrpms tlbuildrpms
-	@echo 'Done $@'
+	@echo '--> Done $@'
 
 getmaster:
+	@echo "=== $@ ==="
 	cd tuleap/stable ; git checkout -f master ; 
+	@echo '--> Done $@'
 	
 getvers: getmaster
+	@echo "=== $@ ==="
 	@lastbranch=$(shell cd tuleap/stable ; basename $$(git branch -va | tail -1 | cut -d" " -f3)) ; \
 	branch=$(shell cd tuleap/stable ; git branch | grep ^\* | cut -d" " -f2) ; \
 	mv tools/rpm ../rpm.master ;\
 	git branch -d $$lastbranch || true ; \
 	git checkout -b $$lastbranch remotes/origin/$$lastbranch ; \
 	mv tools/rpm tools/rpm.old ; mv ../rpm.master tools/rpm
+	@echo '--> Done $@'
 
 tlbuildsrpms: cbayle/docker-tuleap-buildsrpms
 	@echo "=== $@ ==="
@@ -67,6 +73,7 @@ tlbuildsrpms: cbayle/docker-tuleap-buildsrpms
 		-v $(CURDIR)/tuleap/stable:/tuleap \
 		-v $(TLBUILDDIR):/srpms \
 		cbayle/docker-tuleap-buildsrpms:1.0
+	@echo '--> Done $@'
 	
 tlbuildrpms: cbayle/docker-tuleap-buildrpms
 	@echo "=== $@ ==="
@@ -77,6 +84,7 @@ tlbuildrpms: cbayle/docker-tuleap-buildrpms
 		-v $(TLBUILDDIR):/srpms \
 		-v $(TLRESULTDIR):/tmp/build \
 		cbayle/docker-tuleap-buildrpms /run.sh --folder=rhel6 --php=php
+	@echo '--> Done $@'
 
 buildsrpms: cbayle/docker-tuleap-buildsrpms
 	@echo "=== $@ ==="
@@ -86,6 +94,7 @@ buildsrpms: cbayle/docker-tuleap-buildsrpms
                 -v $(CURDIR):/tuleap \
                 -v $(BUILDDIR):/srpms \
                 cbayle/docker-tuleap-buildsrpms:1.0
+	@echo '--> Done $@'
 
 buildrpms: cbayle/docker-tuleap-buildrpms
 	@echo "=== $@ ==="
@@ -95,14 +104,31 @@ buildrpms: cbayle/docker-tuleap-buildrpms
 		-v $(BUILDDIR)/:/srpms/ \
 		-v $(RESULTDIR)/:/tmp/build \
 		cbayle/docker-tuleap-buildrpms /run.sh --folder=rhel6 --php=php
+	@echo '--> Done $@'
  
 clonetuleap:
 	@echo "=== $@ ==="
-	@[ -d tuleap/stable ] || git clone $(TULEAP) tuleap/stable
+	@if [ ! -d tuleap/stable ] ; \
+	then \
+		git clone $(TULEAP) tuleap/stable ; \
+	fi
 	@echo "=== Current branch ==="
 	@cd tuleap/stable ; git branch -v
 	@echo "=== Last branch availeble ==="
 	@cd tuleap/stable ; git branch -va | tail -1
+	@echo '--> Done $@'
+
+updatetuleap:
+	@echo "=== $@ ==="
+	@if [ -d tuleap/stable ] ; \
+	then \
+		(cd tuleap/stable ; git pull) ; \
+	fi
+	@echo "=== Current branch ==="
+	@cd tuleap/stable ; git branch -v
+	@echo "=== Last branch availeble ==="
+	@cd tuleap/stable ; git branch -va | tail -1
+	@echo '--> Done $@'
 
 clonemodules: 
 	@echo "=== $@ ==="
@@ -115,7 +141,20 @@ clonemodules:
 			git clone $$gitrepo ; \
 		fi \
 	done
-	@echo 'Done $@'
+	@echo '--> Done $@'
+
+updatemodules:
+	@echo "=== $@ ==="
+	@cd modules ; for gitrepo in $(GITREPOS) ; \
+	do \
+		var=$$(basename "$$gitrepo" '.git'); \
+		echo "=== $$var ===" ;\
+		if [ -d "$$var" ] ; \
+		then \
+			(cd $$var ; git pull) ; \
+		fi \
+	done
+	@echo '--> Done $@'
 
 
 # We need :
@@ -125,6 +164,7 @@ clonemodules:
 #  get french documentation 
 # we only build if doc/rpm/RPMS/noarch is not yet there
 builddoc: cbayle/docker-build-documentation doc/deps doc/en doc/fr
+	@echo "=== $@ ==="
 	@if [ ! -d doc/rpm/RPMS/noarch ] ; \
 	then \
 		docker run --rm -e VERSION=$(VERSION) \
@@ -135,55 +175,107 @@ builddoc: cbayle/docker-build-documentation doc/deps doc/en doc/fr
 	else \
 		echo "Doc already build, remove doc/rpm if you want to rebuild"; \
 	fi
+	@echo '--> Done $@'
 
 # We build the container if not found in locally available images
 cbayle/docker-build-documentation:
+	@echo "=== $@ ==="
 	@if docker images $@ | grep -q $@ ; \
 	then \
 		docker images $@ ; \
 	else \
 		make docker-build-documentation-container ; \
-	fi ;\
+	fi
+	@echo '--> Done $@'
 
 # Check container is there
 cbayle/docker-tuleap-buildsrpms:
-	@docker images $@ | grep -q $@
+	@echo "=== $@ ==="
+	@if docker images $@ | grep -q $@ ; \
+	then \
+		docker images $@ ; \
+	else \
+		make docker-build-srpms-container ; \
+	fi
+	@echo '--> Done $@'
 
 # Check container is there
 cbayle/docker-tuleap-buildrpms:
-	@docker images $@ | grep -q $@
+	@echo "=== $@ ==="
+	@if docker images $@ | grep -q $@ ; \
+	then \
+		docker images $@ ; \
+	else \
+		make docker-build-rpms-container ; \
+	fi
+	@echo '--> Done $@'
 
-docker-build-documentation-container: doc/docker-build-documentation
-	cd doc/docker-build-documentation ; docker build -t cbayle/docker-build-documentation .
+docker-build-documentation-container: docker/docker-build-documentation
+	@echo "=== $@ ==="
+	cd docker/docker-build-documentation ; docker build -t cbayle/docker-build-documentation .
+	@echo '--> Done $@'
 
-doc/docker-build-documentation:
+docker-build-rpms-container: docker/docker-tuleap-buildrpms
+	@echo "=== $@ $< ==="
+	cd $< ; docker build -t cbayle/docker-tuleap-buildrpms:1.0 .
+	@echo '--> Done $@'
+
+docker-build-srpms-container: docker/docker-tuleap-buildsrpms
+	@echo "=== $@ = $< ==="
+	cd $< ; docker build -t cbayle/docker-tuleap-buildsrpms:1.0 .
+	@echo '--> Done $@'
+
+docker/docker-tuleap-buildrpms:
+	@echo "=== $@ ==="
+	git clone $(BUILD_RPM_CONTAINER) $@
+	@echo '--> Done $@'
+
+docker/docker-tuleap-buildsrpms:
+	@echo "=== $@ ==="
+	git clone $(BUILD_SRPM_CONTAINER) $@
+	@echo '--> Done $@'
+
+docker/docker-build-documentation:
+	@echo "=== $@ ==="
 	git clone $(BUILD_DOC_CONTAINER) $@
+	@echo '--> Done $@'
 
 doc/deps: 
+	@echo "=== $@ ==="
 	git clone $(DEPS) doc/deps
+	@echo '--> Done $@'
 
 doc/en: 
+	@echo "=== $@ ==="
 	git clone $(EN) doc/en
+	@echo '--> Done $@'
 
 doc/fr: 
+	@echo "=== $@ ==="
 	git clone $(FR) doc/fr
+	@echo '--> Done $@'
 
 copydoc: $(RESULTDIR)/RPMS/noarch $(RESULTDIR)/SOURCES $(RESULTDIR)/SPECS builddoc 
+	@echo "=== $@ ==="
 	@cp doc/rpm/RPMS/noarch/*.rpm $(RESULTDIR)/RPMS/noarch
 	@cp doc/rpm/SOURCES/*.tar.gz $(RESULTDIR)/SOURCES
 	@cp doc/rpm/SPECS/*.spec $(RESULTDIR)/SPECS
+	@echo '--> Done $@'
 
 $(RESULTDIR)/%:
+	@echo "=== $@ ==="
 	[ -d $@ ] || mkdir -p $@
+	@echo '--> Done $@'
 
 extra: restlertgz
-	@echo 'Done $@'
+	@echo '--> Done $@'
 
 restlertgz:
 	@echo "=== $@ ==="
 	@cd modules/php53-restler ; \
 	[ -f ../php-restler/php-restler-3.0.rc4.tgz ] || \
 		git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
+	@echo "--> Done $@"
 
 
 
