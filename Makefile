@@ -310,7 +310,7 @@ restlertgz:
 		git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
 	@echo "  --> Done $@"
 
-buildrepo:
+buildrepo: /usr/bin/createrepo
 	@echo "=== $@ ==="
 	@[ -d $(RESULTDIR)/RPMS/repodata ] || createrepo $(RESULTDIR)/RPMS
 	@[ -d $(TLRESULTDIR)/RPMS/repodata ] || createrepo $(TLRESULTDIR)/RPMS
@@ -325,5 +325,6 @@ clean:
 	rm -rf $(RESULTDIR)
 	@echo "  --> Done $@"
 
-
+/usr/bin/createrepo:
+	sudo apt-get install createrepo
 
