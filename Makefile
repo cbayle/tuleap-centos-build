@@ -32,12 +32,12 @@ FR=https://github.com/Enalean/tuleap-documentation-fr.git
 
 
 BUILD_DOC_CONTAINER=https://github.com/Enalean/docker-build-documentation.git
-BUILD_RPM_CONTAINER=https://github.com/Enalean/docker-tuleap-buildrpms.git
+BUILD_RPM_CONTAINER=https://github.com/cbayle/docker-tuleap-buildrpms.git
 BUILD_SRPM_CONTAINER=https://github.com/Enalean/docker-tuleap-buildsrpms.git
 BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
 
-default: buildmodules buildtuleap copydoc
+default: buildmodules buildtuleap copydoc buildrepo
 	@echo '--> Done $@ $(VERSION)'
 
 buildmodules: clonemodules extra buildsrpms buildrpms
@@ -65,7 +65,7 @@ getvers: getmaster
 	mv tools/rpm tools/rpm.old ; mv ../rpm.master tools/rpm
 	@echo '--> Done $@'
 
-tlbuildsrpms: cbayle/docker-tuleap-buildsrpms
+tlbuildsrpms: $(TLBUILDDIR) cbayle/docker-tuleap-buildsrpms
 	@echo "=== $@ ==="
 	@[ -d $(TLBUILDDIR)/rhel6 ] || docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
@@ -73,9 +73,16 @@ tlbuildsrpms: cbayle/docker-tuleap-buildsrpms
 		-v $(CURDIR)/tuleap/stable:/tuleap \
 		-v $(TLBUILDDIR):/srpms \
 		cbayle/docker-tuleap-buildsrpms:1.0
+	# A bit ugly, should be done by docker-tuleap-buildrpms container
+	@docker run --rm=true -t -i \
+                -v $(TLBUILDDIR):/srpms \
+		ubuntu:14.04 /bin/chown -R $(shell id -u).$(shell id -g) /srpms
 	@echo '  --> Already Done $@ : remove $(TLBUILDDIR)/rhel6 to rebuild'
 	
-tlbuildrpms: cbayle/docker-tuleap-buildrpms
+$(TLBUILDDIR):
+	mkdir $(TLBUILDDIR)
+
+tlbuildrpms: $(TLRESULTDIR) cbayle/docker-tuleap-buildrpms
 	@echo "=== $@ ==="
 	@[ -d $(TLRESULTDIR)/RPMS/noarch ] || docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
@@ -84,9 +91,16 @@ tlbuildrpms: cbayle/docker-tuleap-buildrpms
 		-v $(TLBUILDDIR):/srpms \
 		-v $(TLRESULTDIR):/tmp/build \
 		cbayle/docker-tuleap-buildrpms:1.0 /run.sh --folder=rhel6 --php=php
+	# A bit ugly, should be done by docker-tuleap-buildrpms container
+	@docker run --rm=true -t -i \
+		-v $(TLRESULTDIR):/tmp/build \
+		centos:centos6 /bin/chown -R $(shell id -u).$(shell id -g) /tmp/build
 	@echo '  --> Already Done $@ : remove $(TLRESULTDIR)/RPMS/noarch to rebuild'
 
-buildsrpms: cbayle/docker-tuleap-buildsrpms
+$(TLRESULTDIR):
+	mkdir $(TLRESULTDIR)
+
+buildsrpms: $(BUILDDIR) cbayle/docker-tuleap-buildsrpms
 	@echo "=== $@ ==="
 	@[ -d $(BUILDDIR)/rhel6 ] || docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
@@ -95,17 +109,32 @@ buildsrpms: cbayle/docker-tuleap-buildsrpms
                 -v $(BUILDDIR):/srpms \
                 cbayle/docker-tuleap-buildsrpms:1.0
 	@echo '  --> Done $@'
+	# A bit ugly, should be done by docker-tuleap-buildrpms container
+	@docker run --rm=true -t -i \
+                -v $(BUILDDIR):/srpms \
+		ubuntu:14.04 /bin/chown -R $(shell id -u).$(shell id -g) /srpms
+	@echo '  --> Done $@'
 
-buildrpms: cbayle/docker-tuleap-buildrpms
+$(BUILDDIR):
+	mkdir $(BUILDDIR)
+
+buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms
 	@echo "=== $@ ==="
 	@[ -d $(RESULTDIR)/RPMS/noarch ] || docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
 		-e GID=$(shell id -g) \
-		-v $(BUILDDIR)/:/srpms/ \
-		-v $(RESULTDIR)/:/tmp/build \
-		cbayle/docker-tuleap-buildrpms /run.sh --folder=rhel6 --php=php
+		-v $(BUILDDIR):/srpms/ \
+		-v $(RESULTDIR):/tmp/build \
+		cbayle/docker-tuleap-buildrpms:1.0 /run.sh --folder=rhel6 --php=php
+	# A bit ugly, should be done by docker-tuleap-buildrpms container
+	@docker run --rm=true -t -i \
+		-v $(RESULTDIR):/tmp/build \
+		centos:centos6 /bin/chown -R $(shell id -u).$(shell id -g) /tmp/build
 	@echo '  --> Done $@'
  
+$(RESULTDIR):
+	mkdir $(RESULTDIR)
+
 clonetuleap:
 	@echo "=== $@ ==="
 	@if [ ! -d tuleap/stable ] ; \
@@ -277,6 +306,20 @@ restlertgz:
 		git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
 	@echo "  --> Done $@"
 
+buildrepo:
+	@echo "=== $@ ==="
+	@[ -d $(RESULTDIR)/RPMS/repodata ] || createrepo $(RESULTDIR)/RPMS
+	@[ -d $(TLRESULTDIR)/RPMS/repodata ] || createrepo $(TLRESULTDIR)/RPMS
+	@echo "  --> Done $@"
+
+clean:
+	@echo "=== $@ ==="
+	rm -rf doc/rpm
+	rm -rf $(TLBUILDDIR)
+	rm -rf $(TLRESULTDIR)
+	rm -rf $(BUILDDIR)
+	rm -rf $(RESULTDIR)
+	@echo "  --> Done $@"
 
 
 
