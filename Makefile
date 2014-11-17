@@ -326,5 +326,5 @@ clean:
 	@echo "  --> Done $@"
 
 /usr/bin/createrepo:
-	sudo apt-get install createrepo
+	sudo apt-get -y install createrepo
 
