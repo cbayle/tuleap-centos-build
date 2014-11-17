@@ -4,6 +4,12 @@ RESULTDIR=$(CURDIR)/../rpms-libs
 TLBUILDDIR=$(CURDIR)/../srpms
 TLRESULTDIR=$(CURDIR)/../rpms
 
+# Try to find Tuleap Version, if not set 1.0
+VERSION=$(shell cat tuleap/stable/VERSION 2>/dev/null)
+ifeq ($(strip $(VERSION)),)
+        VERSION=1.0
+endif
+
 GITREPOS=\
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/cvs-tuleap.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/mailman-tuleap.git \
@@ -29,8 +35,8 @@ BUILD_DOC_CONTAINER=https://github.com/Enalean/docker-build-documentation.git
 BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
 
-default: buildmodules copydoc buildtuleap
-	@echo 'Done $@'
+default: buildmodules buildtuleap copydoc
+	@echo 'Done $@ $(VERSION)'
 
 buildmodules: clonemodules extra buildsrpms buildrpms
 	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=forgeupgrade
@@ -41,6 +47,17 @@ buildmodules: clonemodules extra buildsrpms buildrpms
 
 buildtuleap: clonetuleap tlbuildsrpms tlbuildrpms
 	@echo 'Done $@'
+
+getmaster:
+	cd tuleap/stable ; git checkout -f master ; 
+	
+getvers: getmaster
+	@lastbranch=$(shell cd tuleap/stable ; basename $$(git branch -va | tail -1 | cut -d" " -f3)) ; \
+	branch=$(shell cd tuleap/stable ; git branch | grep ^\* | cut -d" " -f2) ; \
+	mv tools/rpm ../rpm.master ;\
+	git branch -d $$lastbranch || true ; \
+	git checkout -b $$lastbranch remotes/origin/$$lastbranch ; \
+	mv tools/rpm tools/rpm.old ; mv ../rpm.master tools/rpm
 
 tlbuildsrpms: cbayle/docker-tuleap-buildsrpms
 	@echo "=== $@ ==="
@@ -100,7 +117,6 @@ clonemodules:
 	done
 	@echo 'Done $@'
 
-VERSION=1.0
 
 # We need :
 #  the docker-build-documentation container 
