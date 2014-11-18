@@ -5,7 +5,6 @@ endif
 PKG_NAME=pkgname
 
 BASE_DIR=$(shell pwd)/modules/$(PKG_NAME)
-version=$(shell LANG=C cat $(BASE_DIR)/VERSION 2>/dev/null)
 
 
 # rpmbuild --showrc | grep _topdir
@@ -35,31 +34,11 @@ rpmprep:
 		[ -d $(RPM_TMP)/$$dir ] || mkdir -p $(RPM_TMP)/$$dir ; \
 	done
 
-copysrc: tarball
-	if [ -f "$(shell ls $(BASE_DIR)/*.tar.gz 2>/dev/null| head -1)" ] ; then \
-		cp $(BASE_DIR)/*.tar.gz $(RPM_TMP)/SOURCES ; \
-	fi
-	if [ -f "$(shell ls $(BASE_DIR)/*.tgz 2>/dev/null| head -1)" ] ; then \
-		cp $(BASE_DIR)/*.tgz $(RPM_TMP)/SOURCES ; \
-	fi
-	if [ -f "$(shell ls $(BASE_DIR)/*.patch 2>/dev/null| head -1)" ] ; then \
-		cp $(BASE_DIR)/*.patch $(RPM_TMP)/SOURCES ; \
-	fi
-
-tarball: rpmprep
-	if [ ! -f $(BASE_DIR)/*.tar.gz ] ; then \
-		cd $(BASE_DIR) && find . -type f -or -type l | \
-			egrep -v '^./tests' | egrep -v '^./.git' | \
-			cpio -pdumB --quiet $(RPM_TMP)/SOURCES/$(PKG_NAME)-$(version) ; \
-		cd $(RPM_TMP)/SOURCES && \
-			tar czf $(PKG_NAME)-$(version).tar.gz $(PKG_NAME)-$(version) \
-			&& rm -rf $(PKG_NAME)-$(version) ; \
-	fi
+copysrc:
+	cd $(BASE_DIR) ; find . | grep -v '.spec\|Makefile\|.git' | cpio -pdumvB -R root.root $(RPM_TMP)/SOURCES/
 
 copyspec: rpmprep
-	cat $(BASE_DIR)/$(PKG_NAME).spec |\
-		sed -e 's/@@VERSION@@/$(version)/g' \
-		> $(RPM_TMP)/SPECS/$(PKG_NAME).spec
+	cp $(BASE_DIR)/$(PKG_NAME).spec $(RPM_TMP)/SPECS/
 
 buildsrc: copysrc copyspec
 	[ -f $(RPM_TMP)/RPMS/$(PKG_NAME)*.rpm ] || $(RPMBUILD) -bs $(RPM_TMP)/SPECS/$(PKG_NAME).spec

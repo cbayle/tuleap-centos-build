@@ -14,9 +14,12 @@ endif
 JPGRAPH=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/jpgraph-tuleap.git
 JPGRAPH=https://github.com/cbayle/jpgraph-tuleap.git
 
+GIT=ssh://gitolite@tuleap.net/tuleap/deps/src/git.git
+GITOLITE3=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/gitolite3.git
+
+
 GITREPOS=\
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/cvs-tuleap.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/mailman-tuleap.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/php-mediawiki-tuleap.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/viewvc-tuleap.git \
 $(JPGRAPH) \
@@ -26,7 +29,14 @@ ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/restler-api-explorer.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/htmlpurifier.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-zendframework.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/forgeupgrade.git
+ssh://gitolite@tuleap.net/tuleap/deps/tuleap/forgeupgrade.git \
+ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git \
+ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-sabredav.git \
+ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/geshi.git \
+ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/mailman-tuleap.git \
+ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-pear-Mail-Mbox.git \
+ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-guzzle.git \
+
 
 TULEAP=ssh://gitolite@tuleap.net/tuleap/tuleap/stable.git
 
