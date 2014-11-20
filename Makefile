@@ -53,6 +53,7 @@ BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
 default: buildmodules buildtuleap copydoc buildrepo
 	@echo '--> Done $@ $(VERSION)'
+	@echo ''
 
 buildmodules: clonemodules extra buildsrpms buildrpms
 	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=forgeupgrade
@@ -60,14 +61,17 @@ buildmodules: clonemodules extra buildsrpms buildrpms
 	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=jpgraph-tuleap
 	@#createrepo $(RESULTDIR)/RPMS
 	@echo '--> Done $@'
+	@echo ''
 
 buildtuleap: clonetuleap tlbuildsrpms tlbuildrpms
 	@echo '--> Done $@'
+	@echo ''
 
 getmaster:
 	@echo "=== $@ ==="
 	cd tuleap/stable ; git checkout -f master ; 
 	@echo '--> Done $@'
+	@echo ''
 	
 getvers: getmaster
 	@echo "=== $@ ==="
@@ -78,63 +82,70 @@ getvers: getmaster
 	git checkout -b $$lastbranch remotes/origin/$$lastbranch ; \
 	mv tools/rpm tools/rpm.old ; mv ../rpm.master tools/rpm
 	@echo '--> Done $@'
+	@echo ''
 
 tlbuildsrpms: $(TLBUILDDIR) cbayle/docker-tuleap-buildsrpms
 	@echo "=== $@ ==="
-	@[ -d $(TLBUILDDIR)/rhel6 ] || docker run --rm=true -t -i \
-		-e UID=$(shell id -u) \
-		-e GID=$(shell id -g) \
-		-v $(CURDIR)/tuleap/stable:/tuleap \
-		-v $(TLBUILDDIR):/srpms \
-		cbayle/docker-tuleap-buildsrpms:1.0
-	# A bit ugly, should be done by docker-tuleap-buildrpms container
-	@docker run --rm=true -t -i \
-                -v $(TLBUILDDIR):/srpms \
-		ubuntu:14.04 /bin/chown -R $(shell id -u).$(shell id -g) /srpms
-	@echo '  --> Already Done $@ : remove $(TLBUILDDIR)/rhel6 to rebuild'
+	@if ls $(TLBUILDDIR)/rhel6/tuleap-[0-9]*.src.rpm 2>/dev/null ; \
+	then \
+		echo '        --> Already Done $@' ; \
+	else \
+		docker run --rm=true -t -i \
+			-e UID=$(shell id -u) \
+			-e GID=$(shell id -g) \
+			-v $(CURDIR)/tuleap/stable:/tuleap \
+			-v $(TLBUILDDIR):/srpms \
+			cbayle/docker-tuleap-buildsrpms:1.0 ; \
+		docker run --rm=true -t -i \
+                	-v $(TLBUILDDIR):/srpms \
+			ubuntu:14.04 /bin/chown -R $(shell id -u).$(shell id -g) /srpms ; \
+	fi
+	@echo '--> Done $@'
+	@echo ''
 	
 $(TLBUILDDIR):
 	mkdir $(TLBUILDDIR)
 
 tlbuildrpms: $(TLRESULTDIR) cbayle/docker-tuleap-buildrpms
 	@echo "=== $@ ==="
-	@[ -d $(TLRESULTDIR)/RPMS/noarch ] || docker run --rm=true -t -i \
+	@docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
 		-e GID=$(shell id -g) \
 		-v $(CURDIR)/tuleap/stable:/tuleap \
 		-v $(TLBUILDDIR):/srpms \
 		-v $(TLRESULTDIR):/tmp/build \
 		cbayle/docker-tuleap-buildrpms:1.0 /run.sh --folder=rhel6 --php=php
-	# A bit ugly, should be done by docker-tuleap-buildrpms container
+	@# A bit ugly, should be done by docker-tuleap-buildrpms container
 	@docker run --rm=true -t -i \
 		-v $(TLRESULTDIR):/tmp/build \
 		centos:centos6 /bin/chown -R $(shell id -u).$(shell id -g) /tmp/build
-	@echo '  --> Already Done $@ : remove $(TLRESULTDIR)/RPMS/noarch to rebuild'
+	@echo '  --> Done $@'
+	@echo ''
 
 $(TLRESULTDIR):
-	mkdir $(TLRESULTDIR)
+	@mkdir $(TLRESULTDIR)
 
 buildsrpms: $(BUILDDIR) cbayle/docker-tuleap-buildsrpms
 	@echo "=== $@ ==="
-	@[ -d $(BUILDDIR)/rhel6 ] || docker run --rm=true -t -i \
+	@docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
 		-e GID=$(shell id -g) \
                 -v $(CURDIR):/tuleap \
                 -v $(BUILDDIR):/srpms \
                 cbayle/docker-tuleap-buildsrpms:1.0
-	@echo '  --> Done $@'
 	# A bit ugly, should be done by docker-tuleap-buildrpms container
 	@docker run --rm=true -t -i \
                 -v $(BUILDDIR):/srpms \
 		ubuntu:14.04 /bin/chown -R $(shell id -u).$(shell id -g) /srpms
 	@echo '  --> Done $@'
+	@echo ''
 
 $(BUILDDIR):
 	mkdir $(BUILDDIR)
 
 buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms
 	@echo "=== $@ ==="
-	@[ -d $(RESULTDIR)/RPMS/noarch ] || docker run --rm=true -t -i \
+	@docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
 		-e GID=$(shell id -g) \
 		-v $(BUILDDIR):/srpms/ \
@@ -145,6 +156,7 @@ buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms
 		-v $(RESULTDIR):/tmp/build \
 		centos:centos6 /bin/chown -R $(shell id -u).$(shell id -g) /tmp/build
 	@echo '  --> Done $@'
+	@echo ''
  
 $(RESULTDIR):
 	mkdir $(RESULTDIR)
@@ -160,6 +172,7 @@ clonetuleap:
 	@echo "=== Last branch availeble ==="
 	@cd tuleap/stable ; git branch -va | tail -1
 	@echo '  --> Done $@'
+	@echo ''
 
 updatetuleap:
 	@echo "=== $@ ==="
@@ -172,6 +185,7 @@ updatetuleap:
 	@echo "  === Last branch availeble ==="
 	@cd tuleap/stable ; git branch -va | tail -1
 	@echo '  --> Done $@'
+	@echo ''
 
 clonemodules: 
 	@echo "=== $@ ==="
@@ -185,6 +199,7 @@ clonemodules:
 		fi \
 	done
 	@echo '  --> Done $@'
+	@echo ''
 
 updatemodules:
 	@echo "=== $@ ==="
@@ -198,6 +213,7 @@ updatemodules:
 		fi \
 	done
 	@echo '  --> Done $@'
+	@echo ''
 
 
 # We need :
@@ -219,6 +235,7 @@ builddoc: cbayle/docker-build-documentation doc/deps doc/en doc/fr
 		echo "Doc already build, remove doc/rpm if you want to rebuild"; \
 	fi
 	@echo '  --> Done $@'
+	@echo ''
 
 # We build the container if not found in locally available images
 cbayle/docker-build-documentation:
@@ -230,6 +247,7 @@ cbayle/docker-build-documentation:
 		make docker-build-documentation-container ; \
 	fi
 	@echo '  --> Done $@'
+	@echo ''
 
 # Check container is there
 cbayle/docker-tuleap-buildsrpms:
@@ -241,6 +259,7 @@ cbayle/docker-tuleap-buildsrpms:
 		make docker-build-srpms-container ; \
 	fi
 	@echo '  --> Done $@'
+	@echo ''
 
 # Check container is there
 cbayle/docker-tuleap-buildrpms:
@@ -252,51 +271,61 @@ cbayle/docker-tuleap-buildrpms:
 		make docker-build-rpms-container ; \
 	fi
 	@echo '  --> Done $@'
+	@echo ''
 
 docker-build-documentation-container: docker/docker-build-documentation
 	@echo "=== $@ ==="
 	cd docker/docker-build-documentation ; docker build -t cbayle/docker-build-documentation .
 	@echo '  --> Done $@'
+	@echo ''
 
 docker-build-rpms-container: docker/docker-tuleap-buildrpms
 	@echo "=== $@ $< ==="
 	cd $< ; docker build -t cbayle/docker-tuleap-buildrpms:1.0 .
 	@echo '  --> Done $@'
+	@echo ''
 
 docker-build-srpms-container: docker/docker-tuleap-buildsrpms
 	@echo "=== $@ = $< ==="
 	cd $< ; docker build -t cbayle/docker-tuleap-buildsrpms:1.0 .
 	@echo '--> Done $@'
+	@echo ''
 
 docker/docker-tuleap-buildrpms:
 	@echo "=== $@ ==="
 	git clone $(BUILD_RPM_CONTAINER) $@
 	@echo '  --> Done $@'
+	@echo ''
 
 docker/docker-tuleap-buildsrpms:
 	@echo "=== $@ ==="
 	git clone $(BUILD_SRPM_CONTAINER) $@
 	@echo '  --> Done $@'
+	@echo ''
 
 docker/docker-build-documentation:
 	@echo "=== $@ ==="
 	git clone $(BUILD_DOC_CONTAINER) $@
 	@echo '  --> Done $@'
+	@echo ''
 
 doc/deps: 
 	@echo "=== $@ ==="
 	git clone $(DEPS) doc/deps
 	@echo '  --> Done $@'
+	@echo ''
 
 doc/en: 
 	@echo "=== $@ ==="
 	git clone $(EN) doc/en
 	@echo '  --> Done $@'
+	@echo ''
 
 doc/fr: 
 	@echo "=== $@ ==="
 	git clone $(FR) doc/fr
 	@echo '  --> Done $@'
+	@echo ''
 
 copydoc: $(RESULTDIR)/RPMS/noarch $(RESULTDIR)/SOURCES $(RESULTDIR)/SPECS builddoc 
 	@echo "=== $@ ==="
@@ -304,14 +333,17 @@ copydoc: $(RESULTDIR)/RPMS/noarch $(RESULTDIR)/SOURCES $(RESULTDIR)/SPECS buildd
 	@cp doc/rpm/SOURCES/*.tar.gz $(RESULTDIR)/SOURCES
 	@cp doc/rpm/SPECS/*.spec $(RESULTDIR)/SPECS
 	@echo '  --> Done $@'
+	@echo ''
 
 $(RESULTDIR)/%:
 	@echo "=== $@ ==="
 	[ -d $@ ] || mkdir -p $@
 	@echo '  --> Done $@'
+	@echo ''
 
 extra: restlertgz
 	@echo '  --> Done $@'
+	@echo ''
 
 restlertgz:
 	@echo "=== $@ ==="
@@ -325,6 +357,7 @@ buildrepo: /usr/bin/createrepo
 	@[ -d $(RESULTDIR)/RPMS/repodata ] || createrepo $(RESULTDIR)/RPMS
 	@[ -d $(TLRESULTDIR)/RPMS/repodata ] || createrepo $(TLRESULTDIR)/RPMS
 	@echo "  --> Done $@"
+	@echo ''
 
 clean:
 	@echo "=== $@ ==="
@@ -334,6 +367,7 @@ clean:
 	rm -rf $(BUILDDIR)
 	rm -rf $(RESULTDIR)
 	@echo "  --> Done $@"
+	@echo ''
 
 /usr/bin/createrepo:
 	sudo apt-get -y install createrepo

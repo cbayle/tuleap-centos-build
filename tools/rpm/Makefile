@@ -1,26 +1,18 @@
 PKGS=\
 forgeupgrade \
-
-PKGS=\
 cvs-tuleap \
-
-
-PKGS1=\
 mailman-tuleap \
 php-mediawiki-tuleap \
 viewvc-tuleap \
-
-
-PKGS=\
 jpgraph-tuleap \
 htmlpurifier \
 php-zendframework \
 php-restler \
 restler-api-explorer \
+php-sabredav \
 
 
 PKGS3=\
-php-sabredav \
 php-guzzle \
 openfire-tuleap-plugins \
 php-sabredav \
@@ -29,23 +21,37 @@ php-pear-Mail-Mbox \
 
 
 srpms-docker: srpms-docker-$(OS)
-	echo "Done"
+	@echo "Done"
 
 srpms-docker-rhel6:
-	for pkg in $(PKGS); \
+	@[ -d /root/rpmbuild/SRPMS ] || mkdir -p /root/rpmbuild/SRPMS
+	@touch /root/rpmbuild/SRPMS/doing_rhel5
+	@for pkg in $(PKGS); \
 	do \
-		if [ -f ../../Makefile.$$pkg ] ; \
+		echo "------------------------------- $$pkg ---------------------------------------" ; \
+		if ls -l /srpms/rhel6/$$pkg-[0-9]*.src.rpm 2>/dev/null ; \
 		then \
-			make -C ../../ -f Makefile.$$pkg PKG_NAME=$$pkg buildsrc ; \
+			echo "           |" ; \
+			echo "           +--> $$pkg already source built" ; \
+			echo "" ; \
 		else \
-			make -C ../../ -f Makefile.pkgname PKG_NAME=$$pkg buildsrc ; \
-		fi ; \
+			echo "           |" ; \
+			echo "           +---- Building $$pkg -----" ; \
+			echo "" ; \
+			if [ -f ../../Makefile.$$pkg ] ; \
+			then \
+				make -C ../../ -f Makefile.$$pkg PKG_NAME=$$pkg buildsrc ; \
+			else \
+				make -C ../../ -f Makefile.pkgname PKG_NAME=$$pkg buildsrc ; \
+			fi ; \
+		fi; \
 	done 
-	chown -R $$UID.$$GID /root/rpmbuild
-	ls -al /root/rpmbuild/*
-	echo "Done $@"
+	@chown -R $$UID.$$GID /root/rpmbuild ;
+	@#ls -al /root/rpmbuild/*
+	@echo "Done $@"
 	
 srpms-docker-rhel5:
-	touch /root/rpmbuild/SRPMS/not_doing_rhel5
-	ls -al /root/rpmbuild/*
-	echo "Done $@"
+	@[ -d /root/rpmbuild/SRPMS ] || mkdir -p /root/rpmbuild/SRPMS
+	@touch /root/rpmbuild/SRPMS/not_doing_rhel5
+	@#ls -al /root/rpmbuild/*
+	@echo "Done $@"
