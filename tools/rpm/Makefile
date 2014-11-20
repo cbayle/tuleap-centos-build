@@ -1,7 +1,18 @@
 PKGS=\
 forgeupgrade \
-jpgraph-tuleap \
+
+PKGS=\
+cvs-tuleap \
+
+
+PKGS1=\
+mailman-tuleap \
+php-mediawiki-tuleap \
 viewvc-tuleap \
+
+
+PKGS=\
+jpgraph-tuleap \
 htmlpurifier \
 php-zendframework \
 php-restler \
@@ -14,7 +25,6 @@ php-guzzle \
 openfire-tuleap-plugins \
 php-sabredav \
 geshi \
-mailman-tuleap \
 php-pear-Mail-Mbox \
 
 
@@ -24,7 +34,12 @@ srpms-docker: srpms-docker-$(OS)
 srpms-docker-rhel6:
 	for pkg in $(PKGS); \
 	do \
-		make -C ../../ -f Makefile.pkgname PKG_NAME=$$pkg buildsrc ; \
+		if [ -f ../../Makefile.$$pkg ] ; \
+		then \
+			make -C ../../ -f Makefile.$$pkg PKG_NAME=$$pkg buildsrc ; \
+		else \
+			make -C ../../ -f Makefile.pkgname PKG_NAME=$$pkg buildsrc ; \
+		fi ; \
 	done 
 	chown -R $$UID.$$GID /root/rpmbuild
 	ls -al /root/rpmbuild/*
