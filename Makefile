@@ -22,6 +22,7 @@ GITREPOS=\
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/cvs-tuleap.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/php-mediawiki-tuleap.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/viewvc-tuleap.git \
+ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/mailman-tuleap.git \
 $(JPGRAPH) \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-restler.git \
 ssh://gitolite@tuleap.net/tuleap/deps/src/php53-restler.git \
@@ -33,7 +34,6 @@ ssh://gitolite@tuleap.net/tuleap/deps/tuleap/forgeupgrade.git \
 ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-sabredav.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/geshi.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/mailman-tuleap.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-pear-Mail-Mbox.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-guzzle.git \
 
