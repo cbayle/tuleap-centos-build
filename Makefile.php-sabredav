@@ -1,0 +1,57 @@
+ifeq ($(strip $(RPM_TMP)),)
+	RPM_TMP=$(HOME)/rpmbuild
+endif
+
+PKG_NAME=pkgname
+
+BASE_DIR=$(shell pwd)/modules/$(PKG_NAME)
+
+
+# rpmbuild --showrc | grep _topdir
+# gives
+# _builddir     %{_topdir}/BUILD
+# _buildrootdir %{_topdir}/BUILDROOT
+# _rpmdir       %{_topdir}/RPMS
+# _sourcedir    %{_topdir}/SOURCES
+# _specdir      %{_topdir}/SPECS
+# _srcrpmdir    %{_topdir}/SRPMS
+# _topdir       %{getenv:HOME}/rpmbuild
+
+RPMBUILD=rpmbuild --quiet --define='_topdir $(RPM_TMP)' \
+		--define='_builddir $(RPM_TMP)/BUILD' \
+		--define='_rpmdir $(RPM_TMP)/RPMS' \
+		--define='_sourcedir $(RPM_TMP)/SOURCES' \
+		--define='_specdir $(RPM_TMP)/SPECS' \
+		--define='_srcrpmdir $(RPM_TMP)/SRPMS' \
+		--define='_tmppath $(RPM_TMP)/TMP'
+
+all: copysrc copyspec
+
+rpmprep:
+	@[ -d $(RPM_TMP) ] || mkdir -p $(RPM_TMP)
+	@for dir in BUILD RPMS SOURCES SPECS SRPMS TMP ; \
+	do \
+		[ -d $(RPM_TMP)/$$dir ] || mkdir -p $(RPM_TMP)/$$dir ; \
+	done
+
+copysrc:
+	#@cd $(BASE_DIR) ; find . | grep -v '.spec\|Makefile\|.git' | cpio -pdumB -R root.root $(RPM_TMP)/SOURCES/
+	apt-get -y install unzip zip
+	mkdir $(RPM_TMP)/SOURCES/ 
+	cp $(BASE_DIR)/SabreDAV-1.4.4.zip $(RPM_TMP)/SOURCES/ 
+	cd $(RPM_TMP)/SOURCES/ ; unzip SabreDAV-1.4.4.zip 
+	cd $(RPM_TMP)/SOURCES/ ; mv SabreDAV php-sabredav 
+	cd $(RPM_TMP)/SOURCES/ ; zip -r php-sabredav-1.4.4.zip php-sabredav
+
+copyspec: rpmprep
+	@cp $(BASE_DIR)/$(PKG_NAME).spec $(RPM_TMP)/SPECS/
+
+buildsrc: copysrc copyspec
+	@if ls /srpms/$(PKG_NAME)*.src.rpm 2>/dev/null ; \
+	then \
+		echo "   |" ; \
+		echo "   +--> $(PKG_NAME) already source built" ; \
+		echo "" ; \
+	else \
+		$(RPMBUILD) -bs $(RPM_TMP)/SPECS/$(PKG_NAME).spec ; \
+	fi
