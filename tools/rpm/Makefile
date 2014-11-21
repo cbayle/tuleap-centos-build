@@ -8,18 +8,12 @@ jpgraph-tuleap \
 htmlpurifier \
 php-restler \
 restler-api-explorer \
-
-
-NOW_IN_EPEL=\
 php-zendframework \
 php-sabredav \
-
-
-PKGS3=\
-php-guzzle \
 openfire-tuleap-plugins \
-geshi \
+php-guzzle \
 php-pear-Mail-Mbox \
+geshi \
 
 
 srpms-docker: srpms-docker-$(OS)
