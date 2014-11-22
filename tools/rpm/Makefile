@@ -14,6 +14,8 @@ openfire-tuleap-plugins \
 php-guzzle \
 php-pear-Mail-Mbox \
 geshi \
+git \
+Openfire \
 
 
 srpms-docker: srpms-docker-$(OS)
@@ -21,11 +23,11 @@ srpms-docker: srpms-docker-$(OS)
 
 srpms-docker-rhel6:
 	@[ -d /root/rpmbuild/SRPMS ] || mkdir -p /root/rpmbuild/SRPMS
-	@touch /root/rpmbuild/SRPMS/doing_rhel5
+	@touch /root/rpmbuild/SRPMS/doing_rhel6
 	@for pkg in $(PKGS); \
 	do \
 		echo "------------------------------- $$pkg ---------------------------------------" ; \
-		if ls -l /srpms/rhel6/$$pkg-[0-9]*.src.rpm 2>/dev/null ; \
+		if ls -l /srpms/*/$$pkg-[0-9]*.src.rpm 2>/dev/null ; \
 		then \
 			echo "           |" ; \
 			echo "           +--> $$pkg already source built" ; \
