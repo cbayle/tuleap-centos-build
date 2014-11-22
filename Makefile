@@ -4,6 +4,9 @@ RESULTDIR=$(CURDIR)/../rpms-libs
 TLBUILDDIR=$(CURDIR)/../srpms
 TLRESULTDIR=$(CURDIR)/../rpms
 
+RPMCMD=/run.sh --folder=rhel6 --php=php
+SRPMCMD=/run.sh
+
 # Try to find Tuleap Version, if not set 1.0
 VERSION=$(shell cat tuleap/stable/VERSION 2>/dev/null)
 ifeq ($(strip $(VERSION)),)
@@ -16,6 +19,7 @@ JPGRAPH=https://github.com/cbayle/jpgraph-tuleap.git
 
 GIT=ssh://gitolite@tuleap.net/tuleap/deps/src/git.git
 GITOLITE3=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/gitolite3.git
+OPENFIRE=https://github.com/igniterealtime/Openfire
 
 
 GITREPOS=\
@@ -36,6 +40,8 @@ ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-sabredav.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/geshi.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-pear-Mail-Mbox.git \
 ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-guzzle.git \
+$(GIT) \
+$(OPENFIRE)
 
 
 TULEAP=ssh://gitolite@tuleap.net/tuleap/tuleap/stable.git
@@ -95,7 +101,7 @@ tlbuildsrpms: $(TLBUILDDIR) cbayle/docker-tuleap-buildsrpms
 			-e GID=$(shell id -g) \
 			-v $(CURDIR)/tuleap/stable:/tuleap \
 			-v $(TLBUILDDIR):/srpms \
-			cbayle/docker-tuleap-buildsrpms:1.0 ; \
+			cbayle/docker-tuleap-buildsrpms:1.0 $(SRPMCMD) ; \
 		docker run --rm=true -t -i \
                 	-v $(TLBUILDDIR):/srpms \
 			ubuntu:14.04 /bin/chown -R $(shell id -u).$(shell id -g) /srpms ; \
@@ -114,7 +120,7 @@ tlbuildrpms: $(TLRESULTDIR) cbayle/docker-tuleap-buildrpms
 		-v $(CURDIR)/tuleap/stable:/tuleap \
 		-v $(TLBUILDDIR):/srpms \
 		-v $(TLRESULTDIR):/tmp/build \
-		cbayle/docker-tuleap-buildrpms:1.0 /run.sh --folder=rhel6 --php=php
+		cbayle/docker-tuleap-buildrpms:1.0 $(RPMCMD)
 	@# A bit ugly, should be done by docker-tuleap-buildrpms container
 	@docker run --rm=true -t -i \
 		-v $(TLRESULTDIR):/tmp/build \
@@ -125,6 +131,7 @@ tlbuildrpms: $(TLRESULTDIR) cbayle/docker-tuleap-buildrpms
 $(TLRESULTDIR):
 	@mkdir $(TLRESULTDIR)
 
+
 buildsrpms: $(BUILDDIR) cbayle/docker-tuleap-buildsrpms
 	@echo "=== $@ ==="
 	@docker run --rm=true -t -i \
@@ -132,7 +139,7 @@ buildsrpms: $(BUILDDIR) cbayle/docker-tuleap-buildsrpms
 		-e GID=$(shell id -g) \
                 -v $(CURDIR):/tuleap \
                 -v $(BUILDDIR):/srpms \
-                cbayle/docker-tuleap-buildsrpms:1.0
+                cbayle/docker-tuleap-buildsrpms:1.0 $(SRPMCMD)
 	# A bit ugly, should be done by docker-tuleap-buildrpms container
 	@docker run --rm=true -t -i \
                 -v $(BUILDDIR):/srpms \
@@ -148,9 +155,10 @@ buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms
 	@docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
 		-e GID=$(shell id -g) \
+		-v $(CURDIR)/tools/rpm:/tuleap \
 		-v $(BUILDDIR):/srpms/ \
 		-v $(RESULTDIR):/tmp/build \
-		cbayle/docker-tuleap-buildrpms:1.0 /run.sh --folder=rhel6 --php=php
+		cbayle/docker-tuleap-buildrpms:1.0 $(RPMCMD)
 	# A bit ugly, should be done by docker-tuleap-buildrpms container
 	@docker run --rm=true -t -i \
 		-v $(RESULTDIR):/tmp/build \
@@ -341,7 +349,7 @@ $(RESULTDIR)/%:
 	@echo '  --> Done $@'
 	@echo ''
 
-extra: restlertgz
+extra: restlertgz renameopenfire #getopenfire
 	@echo '  --> Done $@'
 	@echo ''
 
@@ -352,6 +360,16 @@ restlertgz:
 		git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
 	@echo "  --> Done $@"
 
+renameopenfire:
+	@echo "=== $@ ==="
+	@perl -pi -e 's/codendi/tuleap/g' modules/openfire-tuleap-plugins/openfire-tuleap-plugins.spec
+	@echo "  --> Done $@"
+
+getopenfire:
+	[ -f $(RESULTDIR)/RPMS/noarch/openfire-3.9.3-1.i386.rpm ] || \
+	wget -o $(RESULTDIR)/RPMS/noarch/openfire-3.9.3-1.i386.rpm \
+	http://download.igniterealtime.org/openfire/openfire-3.9.3-1.i386.rpm
+	
 buildrepo: /usr/bin/createrepo
 	@echo "=== $@ ==="
 	@[ -d $(RESULTDIR)/RPMS/repodata ] || createrepo $(RESULTDIR)/RPMS
