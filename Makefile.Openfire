@@ -1,0 +1,86 @@
+ifeq ($(strip $(RPM_TMP)),)
+	RPM_TMP=$(HOME)/rpmbuild
+endif
+
+PKG_NAME=pkgname
+
+BASE_DIR=$(shell pwd)/modules/$(PKG_NAME)
+
+VERS=3.9.3
+ANTDATE=EEE MMM dd yyyy
+DATE=$(shell date +"%a %b %d %Y")
+
+# rpmbuild --showrc | grep _topdir
+# gives
+# _builddir     %{_topdir}/BUILD
+# _buildrootdir %{_topdir}/BUILDROOT
+# _rpmdir       %{_topdir}/RPMS
+# _sourcedir    %{_topdir}/SOURCES
+# _specdir      %{_topdir}/SPECS
+# _srcrpmdir    %{_topdir}/SRPMS
+# _topdir       %{getenv:HOME}/rpmbuild
+
+RPMBUILD=rpmbuild --quiet --define='_topdir $(RPM_TMP)' \
+		--define='_builddir $(RPM_TMP)/BUILD' \
+		--define='_rpmdir $(RPM_TMP)/RPMS' \
+		--define='_sourcedir $(RPM_TMP)/SOURCES' \
+		--define='_specdir $(RPM_TMP)/SPECS' \
+		--define='_srcrpmdir $(RPM_TMP)/SRPMS' \
+		--define='_tmppath $(RPM_TMP)/TMP' \
+		--target noarch
+
+# See Openfire/build/build.xml
+#--target noarch --define 'OPENFIRE_VERSION $(version)' --define 'OPENFIRE_SOURCE ${release.fullname.src}-$(version).tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+#--target i386 --define 'JRE_BUNDLE ${jre.bundle.location}' --define 'OPENFIRE_VERSION ${version}' --define 'OPENFIRE_SOURCE ${release.fullname.src}.tar.gz' --define 'OPENFIRE_BUILDDATE ${rpm.builddate}'"
+
+all: copysrc copyspec
+
+rpmprep:
+	@[ -d $(RPM_TMP) ] || mkdir -p $(RPM_TMP)
+	@for dir in BUILD RPMS SOURCES SPECS SRPMS TMP ; \
+	do \
+		[ -d $(RPM_TMP)/$$dir ] || mkdir -p $(RPM_TMP)/$$dir ; \
+	done
+
+copysrc:
+	@[ -d $(RPM_TMP)/SOURCES ] || mkdir $(RPM_TMP)/SOURCES
+	@#if [ ! -f $(RPM_TMP)/SOURCES/openfire_src_3_9_3.tar.gz ] ; 
+	@# Only copy for a source rebuild
+	@if ! ls /srpms/rhel6/openfire-[0-9]*.src.rpm 2>/dev/null ; \
+	then \
+		apt-get -y install openjdk-7-jdk ant ; \
+		cd $(BASE_DIR) ; \
+		git checkout master ; \
+		git branch -d v$(VERS) || true ; \
+		git checkout -b v$(VERS) v$(VERS) ; \
+		locale-gen en_US.UTF-8 ; export LANG=en_US.UTF-8 ; \
+		cd $(BASE_DIR)/build ; ant -Dbundle.jre=false dist.src ; \
+		cp $(BASE_DIR)/target/release/openfire_src_3_9_3.tar.gz $(RPM_TMP)/SOURCES ; \
+	fi 
+
+/usr/lib/jvm/java-7-openjdk-i386/lib/tools.jar:
+	apt-get -y install openjdk-7-jdk ant
+
+copyspec: rpmprep
+	@cat $(BASE_DIR)/build/rpm/openfire.spec | \
+	sed 's/%{OPENFIRE_VERSION}/$(VERS)/' | \
+	sed 's/%{OPENFIRE_SOURCE}/openfire_src_3_9_3.tar.gz/' | \
+	sed 's/%{OPENFIRE_BUILDDATE}/$(DATE)/' > \
+	$(RPM_TMP)/SPECS/Openfire.spec
+	#BuildRequires:
+
+buildsrc: copysrc copyspec
+	@if ls /srpms/rhel6/openfire-[0-9]*.src.rpm 2>/dev/null ; \
+	then \
+		echo "   |" ; \
+		echo "   +--> $(PKG_NAME) already source built" ; \
+		echo "" ; \
+	else \
+		echo "   |" ; \
+		echo "   ----- Building source package $(PKG_NAME) -----" ; \
+		$(RPMBUILD) -bs $(RPM_TMP)/SPECS/Openfire.spec ; \
+	fi
+
+#		cd $(BASE_DIR)/build ; ant -Dbundle.jre=false installer.rpm ; \
+#		cp $(BASE_DIR)/target/release/openfire-$(VERS)-1.src.rpm $(RPM_TMP)/SRPMS ; \
+
