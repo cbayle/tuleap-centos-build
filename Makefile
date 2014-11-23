@@ -69,7 +69,7 @@ default: clonecode buildcode buildrepo
 	@echo '--> Done $@'
 	@echo ''
 
-clonecode: clonemodules clonetuleap cloneopenfire
+clonecode: clonemodules cloneopenfire clonetuleap
 	@echo '--> Done $@'
 	@echo ''
 
@@ -102,10 +102,6 @@ buildsrpms: $(BUILDDIR) cbayle/docker-tuleap-buildsrpms
                 -v $(CURDIR):/tuleap \
                 -v $(BUILDDIR):/srpms \
                 cbayle/docker-tuleap-buildsrpms:1.0 $(SRPMCMD)
-	# A bit ugly, should be done by docker-tuleap-buildrpms container
-	@docker run --rm=true -t -i \
-                -v $(BUILDDIR):/srpms \
-		ubuntu:14.04 /bin/chown -R $(shell id -u).$(shell id -g) /srpms
 	@echo '  --> Done $@'
 	@echo ''
 
@@ -118,10 +114,6 @@ buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms extra
 		-v $(BUILDDIR):/srpms/ \
 		-v $(RESULTDIR):/tmp/build \
 		cbayle/docker-tuleap-buildrpms:1.0 $(RPMCMD)
-	# A bit ugly, should be done by docker-tuleap-buildrpms container
-	@docker run --rm=true -t -i \
-		-v $(RESULTDIR):/tmp/build \
-		centos:centos6 /bin/chown -R $(shell id -u).$(shell id -g) /tmp/build
 	@echo '  --> Done $@'
 	@echo ''
  
@@ -131,7 +123,7 @@ $(BUILDDIR):
 $(RESULTDIR):
 	mkdir $(RESULTDIR)
 
-clonemodules: 
+clonemodules:
 	@echo "=== $@ ==="
 	@cd modules ; for gitrepo in $(GITREPOS) ; \
 	do \
@@ -148,9 +140,19 @@ clonemodules:
 cloneopenfire:
 	@echo "=== $@ ==="
 	@cd modules ; \
-	if [ ! -d tuleap ] ; \
+	if [ ! -d openfire ] ; \
 	then \
 		git clone $(OPENFIRE) openfire ; \
+	fi ;
+	@echo '--> Done $@'
+	@echo ''
+
+clonetuleap:
+	@echo "=== $@ ==="
+	@cd modules ; \
+	if [ ! -d tuleap ] ; \
+	then \
+		git clone $(TULEAP) tuleap ; \
 	fi ;
 	@echo '--> Done $@'
 	@echo ''
