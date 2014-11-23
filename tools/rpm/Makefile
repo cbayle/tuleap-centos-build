@@ -17,6 +17,7 @@ php-pear-Mail-Mbox \
 geshi \
 git \
 openfire \
+php-elasticsearch \
 
 
 srpms-docker: srpms-docker-$(OS)

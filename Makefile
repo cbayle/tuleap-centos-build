@@ -46,11 +46,13 @@ GUZZLE=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-guzzle.git
 # GIT
 GIT=ssh://gitolite@tuleap.net/tuleap/deps/src/git.git
 GITOLITE3=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/gitolite3.git
+# ELASTIC
+PHP_ELASTIC=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-elasticsearch.git
 
 # TULEAP
 TULEAP=ssh://gitolite@tuleap.net/tuleap/tuleap/stable.git
 
-GITREPOS=$(CVS) $(MEDIAWIKI) $(VIEWVC) $(MAILMAN) $(JPGRAPH) $(PHP_RESTLER) $(PHP53_RESTLER) $(RESTLER_API) $(HTMLPURIFIER) $(ZENDFRAMEWORK) $(OPENFIRE-TULEAP) $(FORGEUPGRADE) $(SABREDAV) $(GESHI) $(MAIL_MBOX) $(GUZZLE) $(GIT)
+GITREPOS=$(CVS) $(MEDIAWIKI) $(VIEWVC) $(MAILMAN) $(JPGRAPH) $(PHP_RESTLER) $(PHP53_RESTLER) $(RESTLER_API) $(HTMLPURIFIER) $(ZENDFRAMEWORK) $(OPENFIRE-TULEAP) $(FORGEUPGRADE) $(SABREDAV) $(GESHI) $(MAIL_MBOX) $(GUZZLE) $(GIT) $(PHP_ELASTIC)
 
 DEPS=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/documentation.git
 EN=https://github.com/Enalean/tuleap-documentation-en.git
