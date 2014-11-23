@@ -1,0 +1,17 @@
+#
+#
+# Forward make to modules/tuleap
+#
+
+buildsrc: src$(OS)
+	@echo "Done"
+
+src$(OS):
+	@if ls /srpms/$(OS)/$(PKG_NAME)-[0-9]*.src.rpm 2>/dev/null ; \
+	then \
+		echo "   |" ; \
+		echo "   +--> $(PKG_NAME) already source built" ; \
+		echo "" ; \
+	else \
+		make -C /tuleap/modules/tuleap/tools/rpm srpms-docker OS=$(OS) ; \
+	fi

@@ -1,8 +1,6 @@
 #! /usr/bin/make -f
-BUILDDIR=$(CURDIR)/../srpms-libs
-RESULTDIR=$(CURDIR)/../rpms-libs
-TLBUILDDIR=$(CURDIR)/../srpms
-TLRESULTDIR=$(CURDIR)/../rpms
+BUILDDIR=$(CURDIR)/../srpms
+RESULTDIR=$(CURDIR)/../rpms
 
 RPMCMD=/run.sh --folder=rhel6 --php=php
 SRPMCMD=/run.sh
@@ -13,38 +11,46 @@ ifeq ($(strip $(VERSION)),)
         VERSION=1.0
 endif
 
-# Fix for jpgraph package
-JPGRAPH=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/jpgraph-tuleap.git
+# CVS-TULEAP
+CVS_TULEAP=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/cvs-tuleap.git
+# PHP-MEDIAWIKI-TULEAP
+MEDIAWIKI=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/php-mediawiki-tuleap.git
+# JPGRAPh
+JPGRAPHUPS=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/jpgraph-tuleap.git
 JPGRAPH=https://github.com/cbayle/jpgraph-tuleap.git
-
+# VIEWVC
+VIEWVC=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/viewvc-tuleap.git
+# MAILMAn
+MAILMAN=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/mailman-tuleap.git
+# RESTLER
+PHP_RESTLER=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-restler.git
+PHP53_RESTLER=ssh://gitolite@tuleap.net/tuleap/deps/src/php53-restler.git
+RESTLER_API=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/restler-api-explorer.git
+# HTMLPURIFIER
+HTMLPURIFIER=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/htmlpurifier.git
+# ZENDFRAMEWORK
+ZENDFRAMEWORK=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-zendframework.git
+# OPENFIRE
+OPENFIRE=https://github.com/igniterealtime/Openfire
+OPENFIRE_TULEAP=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git
+# FORGEUPGRADE
+FORGEUPGRADE=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/forgeupgrade.git
+# SABREDAV
+SABREDAV=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-sabredav.git
+# GESHI
+GESHI=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/geshi.git
+# MAIL_MBOX
+MAIL_MBOX=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-pear-Mail-Mbox.git
+# GUZZLE
+GUZZLE=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-guzzle.git
+# GIT
 GIT=ssh://gitolite@tuleap.net/tuleap/deps/src/git.git
 GITOLITE3=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/gitolite3.git
-OPENFIRE=https://github.com/igniterealtime/Openfire
 
-
-GITREPOS=\
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/cvs-tuleap.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/php-mediawiki-tuleap.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/viewvc-tuleap.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/rhel/6/mailman-tuleap.git \
-$(JPGRAPH) \
-ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-restler.git \
-ssh://gitolite@tuleap.net/tuleap/deps/src/php53-restler.git \
-ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/restler-api-explorer.git \
-ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/htmlpurifier.git \
-ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-zendframework.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/forgeupgrade.git \
-ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git \
-ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-sabredav.git \
-ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/geshi.git \
-ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-pear-Mail-Mbox.git \
-ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-guzzle.git \
-$(GIT) \
-$(OPENFIRE)
-
-
+# TULEAP
 TULEAP=ssh://gitolite@tuleap.net/tuleap/tuleap/stable.git
+
+GITREPOS=$(CVS) $(MEDIAWIKI) $(VIEWVC) $(MAILMAN) $(JPGRAPH) $(PHP_RESTLER) $(PHP53_RESTLER) $(RESTLER_API) $(HTMLPURIFIER) $(ZENDFRAMEWORK) $(OPENFIRE-TULEAP) $(FORGEUPGRADE) $(SABREDAV) $(GESHI) $(MAIL_MBOX) $(GUZZLE) $(GIT)
 
 DEPS=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/documentation.git
 EN=https://github.com/Enalean/tuleap-documentation-en.git
@@ -57,19 +63,15 @@ BUILD_SRPM_CONTAINER=https://github.com/Enalean/docker-tuleap-buildsrpms.git
 BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
 
-default: buildmodules buildtuleap copydoc buildrepo
-	@echo '--> Done $@ $(VERSION)'
-	@echo ''
-
-buildmodules: clonemodules extra buildsrpms buildrpms
-	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=forgeupgrade
-	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=viewvc-tuleap
-	@#make -f Makefile.pkgname RPM_TMP=$(BUILDDIR) PKG_NAME=jpgraph-tuleap
-	@#createrepo $(RESULTDIR)/RPMS
+default: clonecode buildcode buildrepo
 	@echo '--> Done $@'
 	@echo ''
 
-buildtuleap: clonetuleap tlbuildsrpms tlbuildrpms
+clonecode: clonemodules clonetuleap cloneopenfire
+	@echo '--> Done $@'
+	@echo ''
+
+buildcode: buildsrpms buildrpms copydoc buildrepo
 	@echo '--> Done $@'
 	@echo ''
 
@@ -90,48 +92,6 @@ getvers: getmaster
 	@echo '--> Done $@'
 	@echo ''
 
-tlbuildsrpms: $(TLBUILDDIR) cbayle/docker-tuleap-buildsrpms
-	@echo "=== $@ ==="
-	@if ls $(TLBUILDDIR)/rhel6/tuleap-[0-9]*.src.rpm 2>/dev/null ; \
-	then \
-		echo '        --> Already Done $@' ; \
-	else \
-		docker run --rm=true -t -i \
-			-e UID=$(shell id -u) \
-			-e GID=$(shell id -g) \
-			-v $(CURDIR)/tuleap/stable:/tuleap \
-			-v $(TLBUILDDIR):/srpms \
-			cbayle/docker-tuleap-buildsrpms:1.0 $(SRPMCMD) ; \
-		docker run --rm=true -t -i \
-                	-v $(TLBUILDDIR):/srpms \
-			ubuntu:14.04 /bin/chown -R $(shell id -u).$(shell id -g) /srpms ; \
-	fi
-	@echo '--> Done $@'
-	@echo ''
-	
-$(TLBUILDDIR):
-	mkdir $(TLBUILDDIR)
-
-tlbuildrpms: $(TLRESULTDIR) cbayle/docker-tuleap-buildrpms
-	@echo "=== $@ ==="
-	@docker run --rm=true -t -i \
-		-e UID=$(shell id -u) \
-		-e GID=$(shell id -g) \
-		-v $(CURDIR)/tuleap/stable:/tuleap \
-		-v $(TLBUILDDIR):/srpms \
-		-v $(TLRESULTDIR):/tmp/build \
-		cbayle/docker-tuleap-buildrpms:1.0 $(RPMCMD)
-	@# A bit ugly, should be done by docker-tuleap-buildrpms container
-	@docker run --rm=true -t -i \
-		-v $(TLRESULTDIR):/tmp/build \
-		centos:centos6 /bin/chown -R $(shell id -u).$(shell id -g) /tmp/build
-	@echo '  --> Done $@'
-	@echo ''
-
-$(TLRESULTDIR):
-	@mkdir $(TLRESULTDIR)
-
-
 buildsrpms: $(BUILDDIR) cbayle/docker-tuleap-buildsrpms
 	@echo "=== $@ ==="
 	@docker run --rm=true -t -i \
@@ -147,10 +107,7 @@ buildsrpms: $(BUILDDIR) cbayle/docker-tuleap-buildsrpms
 	@echo '  --> Done $@'
 	@echo ''
 
-$(BUILDDIR):
-	mkdir $(BUILDDIR)
-
-buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms
+buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms extra
 	@echo "=== $@ ==="
 	@docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
@@ -166,21 +123,11 @@ buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms
 	@echo '  --> Done $@'
 	@echo ''
  
+$(BUILDDIR):
+	mkdir $(BUILDDIR)
+
 $(RESULTDIR):
 	mkdir $(RESULTDIR)
-
-clonetuleap:
-	@echo "=== $@ ==="
-	@if [ ! -d tuleap/stable ] ; \
-	then \
-		git clone $(TULEAP) tuleap/stable ; \
-	fi
-	@echo "=== Current branch ==="
-	@cd tuleap/stable ; git branch -v
-	@echo "=== Last branch availeble ==="
-	@cd tuleap/stable ; git branch -va | tail -1
-	@echo '  --> Done $@'
-	@echo ''
 
 updatetuleap:
 	@echo "=== $@ ==="
@@ -206,7 +153,31 @@ clonemodules:
 			git clone $$gitrepo ; \
 		fi \
 	done
-	@echo '  --> Done $@'
+	@echo '--> Done $@'
+	@echo ''
+
+clonetuleap:
+	@echo "=== $@ ==="
+	@cd modules ; \
+	if [ ! -d tuleap ] ; \
+	then \
+		git clone $(TULEAP) tuleap ; \
+	fi ; \
+	echo "  +-> Current branch" ; \
+	git branch -v ; \
+	echo "  +-> Last branch availeble" ; \
+	git branch -va | tail -1
+	@echo '--> Done $@'
+	@echo ''
+
+cloneopenfire:
+	@echo "=== $@ ==="
+	@cd modules ; \
+	if [ ! -d tuleap ] ; \
+	then \
+		git clone $(OPENFIRE) openfire ; \
+	fi ;
+	@echo '--> Done $@'
 	@echo ''
 
 updatemodules:
@@ -373,15 +344,12 @@ getopenfire:
 buildrepo: /usr/bin/createrepo
 	@echo "=== $@ ==="
 	@[ -d $(RESULTDIR)/RPMS/repodata ] || createrepo $(RESULTDIR)/RPMS
-	@[ -d $(TLRESULTDIR)/RPMS/repodata ] || createrepo $(TLRESULTDIR)/RPMS
 	@echo "  --> Done $@"
 	@echo ''
 
 clean:
 	@echo "=== $@ ==="
 	rm -rf doc/rpm
-	rm -rf $(TLBUILDDIR)
-	rm -rf $(TLRESULTDIR)
 	rm -rf $(BUILDDIR)
 	rm -rf $(RESULTDIR)
 	@echo "  --> Done $@"

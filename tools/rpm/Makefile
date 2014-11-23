@@ -1,4 +1,5 @@
 PKGS=\
+tuleap \
 forgeupgrade \
 cvs-tuleap \
 mailman-tuleap \
@@ -15,7 +16,7 @@ php-guzzle \
 php-pear-Mail-Mbox \
 geshi \
 git \
-Openfire \
+openfire \
 
 
 srpms-docker: srpms-docker-$(OS)
