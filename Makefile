@@ -131,19 +131,6 @@ $(BUILDDIR):
 $(RESULTDIR):
 	mkdir $(RESULTDIR)
 
-updatetuleap:
-	@echo "=== $@ ==="
-	@if [ -d tuleap/stable ] ; \
-	then \
-		(cd tuleap/stable ; git pull) ; \
-	fi
-	@echo "  === Current branch ==="
-	@cd tuleap/stable ; git branch -v
-	@echo "  === Last branch availeble ==="
-	@cd tuleap/stable ; git branch -va | tail -1
-	@echo '  --> Done $@'
-	@echo ''
-
 clonemodules: 
 	@echo "=== $@ ==="
 	@cd modules ; for gitrepo in $(GITREPOS) ; \
@@ -155,20 +142,6 @@ clonemodules:
 			git clone $$gitrepo ; \
 		fi \
 	done
-	@echo '--> Done $@'
-	@echo ''
-
-clonetuleap:
-	@echo "=== $@ ==="
-	@cd modules ; \
-	if [ ! -d tuleap ] ; \
-	then \
-		git clone $(TULEAP) tuleap ; \
-	fi ; \
-	echo "  +-> Current branch" ; \
-	git branch -v ; \
-	echo "  +-> Last branch availeble" ; \
-	git branch -va | tail -1
 	@echo '--> Done $@'
 	@echo ''
 
