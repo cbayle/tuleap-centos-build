@@ -63,7 +63,7 @@ copysrc:
 
 copyspec: rpmprep
 	#@cat $(BASE_DIR)/build/rpm/openfire.spec |
-	@cat /tools/rpm/openfire.spec | \
+	@cat /tuleap/tools/rpm/openfire.spec | \
 	sed 's/%{OPENFIRE_VERSION}/$(VERS)/' | \
 	sed 's/%{OPENFIRE_SOURCE}/openfire_src_3_9_3.tar.gz/' | \
 	sed 's/%{OPENFIRE_BUILDDATE}/$(DATE)/' > \

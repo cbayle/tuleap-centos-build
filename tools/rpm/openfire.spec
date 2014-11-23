@@ -14,7 +14,7 @@ License: Apache license v2.0
 AutoReqProv: no
 BuildRequires: ant
 %ifarch noarch
-Requires: java-devel >=1.7
+Requires: java-devel
 %endif
 URL: http://www.igniterealtime.org/
 
