@@ -59,7 +59,7 @@ GITREPOS=$(CVS) $(MEDIAWIKI) $(VIEWVC) $(MAILMAN) $(JPGRAPH) $(PHP_RESTLER) $(PH
 
 BUILD_DOC_CONTAINER=https://github.com/Enalean/docker-build-documentation.git
 BUILD_RPM_CONTAINER=https://github.com/cbayle/docker-tuleap-buildrpms.git
-BUILD_SRPM_CONTAINER=https://github.com/Enalean/docker-tuleap-buildsrpms.git
+BUILD_SRPM_CONTAINER=https://github.com/cbayle/docker-tuleap-buildsrpms.git
 BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
 default: clonecode buildcode buildrepo
