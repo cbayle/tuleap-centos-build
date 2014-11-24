@@ -34,13 +34,37 @@ rpmprep:
 		[ -d $(RPM_TMP)/$$dir ] || mkdir -p $(RPM_TMP)/$$dir ; \
 	done
 
+#
+# COPYSRC
+#
 copysrc:
 	@cd $(BASE_DIR) ; find . | grep -v '.spec\|Makefile\|.git' | cpio -pdumB -R root.root $(RPM_TMP)/SOURCES/
 
+copysrc_php-restler:
+	@cd $(BASE_DIR)/../php53-restler ; \
+        [ -f $(RPM_TMP)/SOURCES/php-restler-3.0.rc4.tgz ] || \
+                git archive -o $(RPM_TMP)/SOURCES/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
+
+#
+# COPYSPEC
+#
 copyspec: rpmprep
 	@cp $(BASE_DIR)/$(PKG_NAME).spec $(RPM_TMP)/SPECS/
 
-buildsrc: copysrc copyspec
+copyspec_openfire-tuleap-plugins:
+	@perl -pi -e 's/codendi/tuleap/g' $(BASE_DIR)/$(PKG_NAME).spec
+
+#
+# BUILDSRC
+#
+
+buildsrc: buildsrc_$(PKG_NAME)
+
+buildsrc_php-restler: copysrc_php-restler buildsrc_default
+
+buildsrc_openfire-tuleap-plugins: copyspec_openfire-tuleap-plugins buildsrc_default
+
+buildsrc_%: copysrc copyspec
 	@if ls /srpms/$(PKG_NAME)*.src.rpm 2>/dev/null ; \
 	then \
 		echo "   |" ; \

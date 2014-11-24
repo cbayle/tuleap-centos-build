@@ -102,7 +102,7 @@ buildsrpms: $(BUILDDIR) cbayle/docker-tuleap-buildsrpms
 	@echo '  --> Done $@'
 	@echo ''
 
-buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms extra
+buildrpms: $(RESULTDIR) cbayle/docker-tuleap-buildrpms
 	@echo "=== $@ ==="
 	@docker run --rm=true -t -i \
 		-e UID=$(shell id -u) \
@@ -271,22 +271,6 @@ $(RESULTDIR)/%:
 	[ -d $@ ] || mkdir -p $@
 	@echo '  --> Done $@'
 	@echo ''
-
-extra: restlertgz renameopenfire
-	@echo '  --> Done $@'
-	@echo ''
-
-restlertgz:
-	@echo "=== $@ ==="
-	@cd modules/php53-restler ; \
-	[ -f ../php-restler/php-restler-3.0.rc4.tgz ] || \
-		git archive -o ../php-restler/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
-	@echo "  --> Done $@"
-
-renameopenfire:
-	@echo "=== $@ ==="
-	@perl -pi -e 's/codendi/tuleap/g' modules/openfire-tuleap-plugins/openfire-tuleap-plugins.spec
-	@echo "  --> Done $@"
 
 buildrepo: /usr/bin/createrepo
 	@echo "=== $@ ==="
