@@ -1,4 +1,3 @@
-doc/*
 modules/*
 docker/docker-build-documentation
 docker/docker-tuleap-buildrpms
