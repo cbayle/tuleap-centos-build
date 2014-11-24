@@ -37,34 +37,38 @@ rpmprep:
 #
 # COPYSRC
 #
-copysrc:
-	@cd $(BASE_DIR) ; find . | grep -v '.spec\|Makefile\|.git' | cpio -pdumB -R root.root $(RPM_TMP)/SOURCES/
-
-copysrc_php-restler:
+# Overrides
+copysrc_php-restler: rpmprep
 	@cd $(BASE_DIR)/../php53-restler ; \
         [ -f $(RPM_TMP)/SOURCES/php-restler-3.0.rc4.tgz ] || \
                 git archive -o $(RPM_TMP)/SOURCES/php-restler-3.0.rc4.tgz --prefix=restler-3.0.rc4/ HEAD
 
+# Default
+copysrc_%: rpmprep
+	@cd $(BASE_DIR) ; find . | grep -v '.spec\|Makefile\|.git' | cpio -pdumB -R root.root $(RPM_TMP)/SOURCES/
+
 #
 # COPYSPEC
 #
-copyspec: rpmprep
-	@cp $(BASE_DIR)/$(PKG_NAME).spec $(RPM_TMP)/SPECS/
-
+# Overrides
 copyspec_openfire-tuleap-plugins:
-	@perl -pi -e 's/codendi/tuleap/g' $(BASE_DIR)/$(PKG_NAME).spec
+	cat $(BASE_DIR)/$(PKG_NAME).spec | sed 's/codendi/tuleap/g' > $(RPM_TMP)/SPECS/$(PKG_NAME).spec
+
+# Default
+copyspec_%:
+	@cp $(BASE_DIR)/$(PKG_NAME).spec $(RPM_TMP)/SPECS/
 
 #
 # BUILDSRC
 #
-
 buildsrc: buildsrc_$(PKG_NAME)
 
-buildsrc_php-restler: copysrc_php-restler buildsrc_default
+# Overrides
+buildsrc_sample:
+	echo "Do something else for sample"
 
-buildsrc_openfire-tuleap-plugins: copyspec_openfire-tuleap-plugins buildsrc_default
-
-buildsrc_%: copysrc copyspec
+# Default
+buildsrc_%: copysrc_$(PKG_NAME) copyspec_$(PKG_NAME)
 	@if ls /srpms/$(PKG_NAME)*.src.rpm 2>/dev/null ; \
 	then \
 		echo "   |" ; \
