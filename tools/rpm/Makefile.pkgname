@@ -4,7 +4,7 @@ endif
 
 PKG_NAME=pkgname
 
-BASE_DIR=$(shell pwd)/modules/$(PKG_NAME)
+BASE_DIR=$(shell pwd)/../../modules/$(PKG_NAME)
 
 
 # rpmbuild --showrc | grep _topdir

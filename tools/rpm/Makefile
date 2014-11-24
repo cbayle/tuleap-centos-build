@@ -38,11 +38,11 @@ srpms-docker-rhel6:
 			echo "           |" ; \
 			echo "           +---- Building $$pkg -----" ; \
 			echo "" ; \
-			if [ -f ../../Makefile.$$pkg ] ; \
+			if [ -f Makefile.$$pkg ] ; \
 			then \
-				make -C ../../ -f Makefile.$$pkg PKG_NAME=$$pkg buildsrc ; \
+				make -f Makefile.$$pkg PKG_NAME=$$pkg buildsrc ; \
 			else \
-				make -C ../../ -f Makefile.pkgname PKG_NAME=$$pkg buildsrc ; \
+				make -f Makefile.pkgname PKG_NAME=$$pkg buildsrc ; \
 			fi ; \
 		fi; \
 	done 

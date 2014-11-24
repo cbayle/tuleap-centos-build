@@ -133,7 +133,7 @@ clonemodules:
 		else \
 			target=$$2 ; \
 		fi ; \
-		echo "  +-> $$gitrepo	$$target" ;\
+		echo "  +-> $$target\t$$gitrepo" ;\
 		if [ ! -d "$$target" ] ; \
 		then \
 			git clone $$gitrepo $$target ; \
@@ -181,7 +181,7 @@ builddoc: cbayle/docker-build-documentation
 			-v $(CURDIR)/modules/tuleap-documentation:/sources \
 			cbayle/docker-build-documentation ; \
 	else \
-		echo "Doc already build, remove doc/rpm if you want to rebuild"; \
+		echo "Doc already build, remove module/tuleap-documentation/rpm if you want to rebuild"; \
 	fi
 	@echo '  --> Done $@'
 	@echo ''
