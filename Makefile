@@ -6,7 +6,7 @@ RPMCMD=/run.sh --folder=rhel6 --php=php
 SRPMCMD=/run.sh
 
 # Try to find Tuleap Version, if not set 1.0
-VERSION=$(shell cat tuleap/stable/VERSION 2>/dev/null)
+VERSION=$(shell cat modules/tuleap/stable/VERSION 2>/dev/null)
 ifeq ($(strip $(VERSION)),)
         VERSION=1.0
 endif
@@ -31,7 +31,7 @@ HTMLPURIFIER=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/htmlpurifier.git
 # ZENDFRAMEWORK
 ZENDFRAMEWORK=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-zendframework.git
 # OPENFIRE
-OPENFIRE=https://github.com/igniterealtime/Openfire
+OPENFIRE="https://github.com/igniterealtime/Openfire openfire"
 OPENFIRE_TULEAP=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/openfire-tuleap-plugins.git
 # FORGEUPGRADE
 FORGEUPGRADE=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/forgeupgrade.git
@@ -48,28 +48,25 @@ GIT=ssh://gitolite@tuleap.net/tuleap/deps/src/git.git
 GITOLITE3=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/gitolite3.git
 # ELASTIC
 PHP_ELASTIC=ssh://gitolite@tuleap.net/tuleap/deps/3rdparty/php-elasticsearch.git
-
 # TULEAP
-TULEAP=ssh://gitolite@tuleap.net/tuleap/tuleap/stable.git
+TULEAP="ssh://gitolite@tuleap.net/tuleap/tuleap/stable.git tuleap"
+# TULEAP-DOCUMENTATION
+DEPS="ssh://gitolite@tuleap.net/tuleap/deps/tuleap/documentation.git tuleap-documentation/deps"
+EN="https://github.com/Enalean/tuleap-documentation-en.git tuleap-documentation/en"
+FR="https://github.com/Enalean/tuleap-documentation-fr.git tuleap-documentation/fr"
 
-GITREPOS=$(CVS) $(MEDIAWIKI) $(VIEWVC) $(MAILMAN) $(JPGRAPH) $(PHP_RESTLER) $(PHP53_RESTLER) $(RESTLER_API) $(HTMLPURIFIER) $(ZENDFRAMEWORK) $(OPENFIRE-TULEAP) $(FORGEUPGRADE) $(SABREDAV) $(GESHI) $(MAIL_MBOX) $(GUZZLE) $(GIT) $(PHP_ELASTIC)
-
-DEPS=ssh://gitolite@tuleap.net/tuleap/deps/tuleap/documentation.git
-EN=https://github.com/Enalean/tuleap-documentation-en.git
-FR=https://github.com/Enalean/tuleap-documentation-fr.git
-
+GITREPOS=$(CVS) $(MEDIAWIKI) $(VIEWVC) $(MAILMAN) $(JPGRAPH) $(PHP_RESTLER) $(PHP53_RESTLER) $(RESTLER_API) $(HTMLPURIFIER) $(ZENDFRAMEWORK) $(OPENFIRE-TULEAP) $(FORGEUPGRADE) $(SABREDAV) $(GESHI) $(MAIL_MBOX) $(GUZZLE) $(GIT) $(PHP_ELASTIC) $(TULEAP) $(OPENFIRE) $(DEPS) $(EN) $(FR)
 
 BUILD_DOC_CONTAINER=https://github.com/Enalean/docker-build-documentation.git
 BUILD_RPM_CONTAINER=https://github.com/cbayle/docker-tuleap-buildrpms.git
 BUILD_SRPM_CONTAINER=https://github.com/Enalean/docker-tuleap-buildsrpms.git
 BUILD_ADMDOC_CONTAINER=https://github.com/Enalean/tuleap-admin-documentation.git
 
-
 default: clonecode buildcode buildrepo
 	@echo '--> Done $@'
 	@echo ''
 
-clonecode: clonemodules cloneopenfire clonetuleap
+clonecode: clonemodules
 	@echo '--> Done $@'
 	@echo ''
 
@@ -125,47 +122,43 @@ $(RESULTDIR):
 
 clonemodules:
 	@echo "=== $@ ==="
-	@cd modules ; for gitrepo in $(GITREPOS) ; \
+	@cd modules ; for gitline in $(GITREPOS) ; \
 	do \
-		var=$$(basename "$$gitrepo" '.git'); \
-		echo "  +-> $$var" ;\
-		if [ ! -d "$$var" ] ; \
+		set $$gitline; \
+		target=''; \
+		gitrepo=$$1; \
+		if [ -z "$$2" ] ; \
 		then \
-			git clone $$gitrepo ; \
+			target=$$(basename "$$gitrepo" '.git'); \
+		else \
+			target=$$2 ; \
+		fi ; \
+		echo "  +-> $$gitrepo	$$target" ;\
+		if [ ! -d "$$target" ] ; \
+		then \
+			git clone $$gitrepo $$target ; \
 		fi \
 	done
 	@echo '--> Done $@'
 	@echo ''
 
-cloneopenfire:
-	@echo "=== $@ ==="
-	@cd modules ; \
-	if [ ! -d openfire ] ; \
-	then \
-		git clone $(OPENFIRE) openfire ; \
-	fi ;
-	@echo '--> Done $@'
-	@echo ''
-
-clonetuleap:
-	@echo "=== $@ ==="
-	@cd modules ; \
-	if [ ! -d tuleap ] ; \
-	then \
-		git clone $(TULEAP) tuleap ; \
-	fi ;
-	@echo '--> Done $@'
-	@echo ''
-
 updatemodules:
 	@echo "=== $@ ==="
-	@cd modules ; for gitrepo in $(GITREPOS) ; \
+	@cd modules ; for gitline in $(GITREPOS) ; \
 	do \
-		var=$$(basename "$$gitrepo" '.git'); \
-		echo "  +-> $$var" ;\
-		if [ -d "$$var" ] ; \
+		set $$gitline; \
+		target=''; \
+		gitrepo=$$1; \
+		if [ -z "$$2" ] ; \
 		then \
-			(cd $$var ; git pull) ; \
+			target=$$(basename "$$gitrepo" '.git'); \
+		else \
+			target=$$2 ; \
+		fi ; \
+		echo "  +-> $$gitrepo	$$target" ;\
+		if [ -d "$$target" ] ; \
+		then \
+			(cd $$target ; git pull) ; \
 		fi \
 	done
 	@echo '  --> Done $@'
@@ -178,14 +171,14 @@ updatemodules:
 #  get english documentation 
 #  get french documentation 
 # we only build if doc/rpm/RPMS/noarch is not yet there
-builddoc: cbayle/docker-build-documentation doc/deps doc/en doc/fr
+builddoc: cbayle/docker-build-documentation
 	@echo "=== $@ ==="
-	@if [ ! -d doc/rpm/RPMS/noarch ] ; \
+	@if [ ! -d $(CURDIR)/modules/tuleap-documentation/rpm/RPMS/noarch ] ; \
 	then \
 		docker run --rm -e VERSION=$(VERSION) \
 			-e UID=$(shell id -u) \
 			-e GID=$(shell id -g) \
-			-v $(CURDIR)/doc:/sources \
+			-v $(CURDIR)/modules/tuleap-documentation:/sources \
 			cbayle/docker-build-documentation ; \
 	else \
 		echo "Doc already build, remove doc/rpm if you want to rebuild"; \
@@ -265,29 +258,11 @@ docker/docker-build-documentation:
 	@echo '  --> Done $@'
 	@echo ''
 
-doc/deps: 
-	@echo "=== $@ ==="
-	git clone $(DEPS) doc/deps
-	@echo '  --> Done $@'
-	@echo ''
-
-doc/en: 
-	@echo "=== $@ ==="
-	git clone $(EN) doc/en
-	@echo '  --> Done $@'
-	@echo ''
-
-doc/fr: 
-	@echo "=== $@ ==="
-	git clone $(FR) doc/fr
-	@echo '  --> Done $@'
-	@echo ''
-
 copydoc: $(RESULTDIR)/RPMS/noarch $(RESULTDIR)/SOURCES $(RESULTDIR)/SPECS builddoc 
 	@echo "=== $@ ==="
-	@cp doc/rpm/RPMS/noarch/*.rpm $(RESULTDIR)/RPMS/noarch
-	@cp doc/rpm/SOURCES/*.tar.gz $(RESULTDIR)/SOURCES
-	@cp doc/rpm/SPECS/*.spec $(RESULTDIR)/SPECS
+	@cp modules/tuleap-documentation/rpm/RPMS/noarch/*.rpm $(RESULTDIR)/RPMS/noarch
+	@cp modules/tuleap-documentation/rpm/SOURCES/*.tar.gz $(RESULTDIR)/SOURCES
+	@cp modules/tuleap-documentation/rpm/SPECS/*.spec $(RESULTDIR)/SPECS
 	@echo '  --> Done $@'
 	@echo ''
 
@@ -297,7 +272,7 @@ $(RESULTDIR)/%:
 	@echo '  --> Done $@'
 	@echo ''
 
-extra: restlertgz renameopenfire #getopenfire
+extra: restlertgz renameopenfire
 	@echo '  --> Done $@'
 	@echo ''
 
@@ -313,11 +288,6 @@ renameopenfire:
 	@perl -pi -e 's/codendi/tuleap/g' modules/openfire-tuleap-plugins/openfire-tuleap-plugins.spec
 	@echo "  --> Done $@"
 
-getopenfire:
-	[ -f $(RESULTDIR)/RPMS/noarch/openfire-3.9.3-1.i386.rpm ] || \
-	wget -o $(RESULTDIR)/RPMS/noarch/openfire-3.9.3-1.i386.rpm \
-	http://download.igniterealtime.org/openfire/openfire-3.9.3-1.i386.rpm
-	
 buildrepo: /usr/bin/createrepo
 	@echo "=== $@ ==="
 	@[ -d $(RESULTDIR)/RPMS/repodata ] || createrepo $(RESULTDIR)/RPMS
